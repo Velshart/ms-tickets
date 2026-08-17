@@ -1,0 +1,4 @@
+rootProject.name = 'ms-tickets'
+
+include 'user-service'
+include 'tickets-api'

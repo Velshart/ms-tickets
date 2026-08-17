@@ -1,0 +1,40 @@
+services:
+  user-service-db:
+    image: postgres:16-alpine
+    container_name: user-service-db
+    environment:
+      POSTGRES_DB: user_service_db
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    ports:
+      - "5432:5432"
+
+  ticket-api-db:
+      image: postgres:16-alpine
+      container_name: ticket-api-db
+      environment:
+        POSTGRES_DB: ticket_api_db
+        POSTGRES_USER: ${DATABASE_USERNAME}
+        POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      ports:
+        - "5433:5432"
+
+  ticket-worker-db:
+      image: postgres:16-alpine
+      container_name: ticket-service-db
+      environment:
+        POSTGRES_DB: ticket_service_db
+        POSTGRES_USER: ${DATABASE_USERNAME}
+        POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      ports:
+        - "5434:5432"
+
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
