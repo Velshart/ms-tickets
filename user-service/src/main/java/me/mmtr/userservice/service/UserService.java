@@ -47,7 +47,10 @@ public class UserService {
     }
 
     private boolean canDelete(User requester, User target) {
-        if (target.getRole().equals(Role.SUPER_ADMIN)) {
+        if (
+                target.getRole().equals(Role.SUPER_ADMIN) ||
+                requester.getId().equals(target.getId())
+        ) {
             return false;
         }
 
