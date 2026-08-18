@@ -36,7 +36,7 @@ public class UserController {
         return ResponseEntity.ok(userService.getById(id));
     }
 
-    @PostMapping("/register")
+    @PostMapping("/register-admin")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<AuthenticationResponse> registerAdmin(
             @Valid @RequestBody RegisterRequest registerRequest) {
