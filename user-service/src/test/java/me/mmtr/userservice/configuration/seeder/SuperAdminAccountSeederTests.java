@@ -18,8 +18,8 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class SuperAdminAccountSeederTests {
-    private final String USERNAME = "admin";
-    private final String PASSWORD = "password123";
+    private static final String USERNAME = "admin";
+    private static final String PASSWORD = "password123";
     @Mock
     private AuthenticationService authenticationService;
     @Mock

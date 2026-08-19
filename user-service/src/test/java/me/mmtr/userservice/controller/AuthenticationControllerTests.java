@@ -25,9 +25,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(AuthenticationController.class)
 public class AuthenticationControllerTests {
-    private final String USERNAME = "test_user";
-    private final String PASSWORD = "password";
-    private final String TOKEN = "generated.jwt.token";
+    private static final String USERNAME = "test_user";
+    private static final String PASSWORD = "password";
+    private static final String TOKEN = "generated.jwt.token";
     @MockitoBean
     private AuthenticationService authenticationService;
     @MockitoBean

@@ -32,8 +32,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(UserController.class)
 public class UserControllerTests {
     private final long ID = 1L;
-    private final String USERNAME = "test_user";
-    private final String PASSWORD = "password";
+    private static final String USERNAME = "test_user";
+    private static final String PASSWORD = "password";
     @MockitoBean
     private AuthenticationService authenticationService;
     @MockitoBean
@@ -94,15 +94,15 @@ public class UserControllerTests {
                     PASSWORD
             );
 
-            final String TOKEN = "generated.jwt.token";
+            final String token = "generated.jwt.token";
             when(authenticationService.register(registerRequest, Role.ADMIN))
-                    .thenReturn(new AuthenticationResponse(TOKEN));
+                    .thenReturn(new AuthenticationResponse(token));
 
             mockMvc.perform(post("/api/users/register-admin")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(registerRequest)))
                     .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.token").value(TOKEN));
+                    .andExpect(jsonPath("$.token").value(token));
         }
 
         @Test

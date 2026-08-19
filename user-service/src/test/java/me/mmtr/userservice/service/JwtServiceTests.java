@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class JwtServiceTests {
     private static final long ONE_HOUR_IN_MILLIS = 3600000;
-    private final String TEST_SECRET =
+    private static final String TEST_SECRET =
             "NDA0RTYzNUY2QTU4NkU1QzY2MzM4RDQ5MzQ1NDMxMzMzMzc4MzMzMzM=";
     private UserDetails userDetails;
     private JwtService jwtService;

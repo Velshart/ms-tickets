@@ -25,8 +25,8 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTests {
 
-    private final Long TEST_USER_ID = 1L;
-    private final String TEST_USER_NAME = "testUser";
+    private static final Long TEST_USER_ID = 1L;
+    private static final String TEST_USER_NAME = "testUser";
     @Mock
     private UserRepository userRepository;
     @InjectMocks
@@ -35,10 +35,10 @@ public class UserServiceTests {
 
     @BeforeEach
     public void setUp() {
-        final String TEST_USER_PASSWORD = "password";
+        final String testUserPassword = "password";
         testUser = new User(
                 TEST_USER_NAME,
-                TEST_USER_PASSWORD,
+                testUserPassword,
                 Role.SUPER_ADMIN
         );
         testUser.setId(TEST_USER_ID);
