@@ -9,17 +9,7 @@ services:
     ports:
       - "5432:5432"
 
-  ticket-api-db:
-      image: postgres:16-alpine
-      container_name: ticket-api-db
-      environment:
-        POSTGRES_DB: ticket_api_db
-        POSTGRES_USER: ${DATABASE_USERNAME}
-        POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-      ports:
-        - "5433:5432"
-
-  ticket-worker-db:
+  ticket-service-db:
       image: postgres:16-alpine
       container_name: ticket-service-db
       environment:
@@ -27,7 +17,7 @@ services:
         POSTGRES_USER: ${DATABASE_USERNAME}
         POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
       ports:
-        - "5434:5432"
+        - "5433:5432"
 
   rabbitmq:
     image: rabbitmq:3.12-management-alpine
