@@ -1,4 +1,4 @@
-package me.mmtr.ticketsapi;
+package me.mmtr.ticketservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

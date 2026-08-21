@@ -6,7 +6,7 @@ plugins {
 
 group = 'me.mmtr'
 version = '0.0.1-SNAPSHOT'
-description = 'tickets-api'
+description = 'ticket-service'
 
 java {
     toolchain {
