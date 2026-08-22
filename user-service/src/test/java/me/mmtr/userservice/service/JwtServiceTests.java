@@ -1,12 +1,18 @@
 package me.mmtr.userservice.service;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import me.mmtr.userservice.model.Role;
 import me.mmtr.userservice.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import javax.crypto.SecretKey;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -15,14 +21,14 @@ public class JwtServiceTests {
     private static final long ONE_HOUR_IN_MILLIS = 3600000;
     private static final String TEST_SECRET =
             "NDA0RTYzNUY2QTU4NkU1QzY2MzM4RDQ5MzQ1NDMxMzMzMzc4MzMzMzM=";
-    private UserDetails userDetails;
+    private User user;
     private JwtService jwtService;
 
     @BeforeEach
     public void setUp() {
         jwtService = new JwtService(TEST_SECRET, ONE_HOUR_IN_MILLIS);
 
-        userDetails = new User(
+        user = new User(
                 "testUser",
                 "password",
                 Role.USER
@@ -33,10 +39,27 @@ public class JwtServiceTests {
     class GenerateTokenTests {
         @Test
         void shouldGenerateNonEmptyToken() {
-            String token = jwtService.generateToken(userDetails);
+            String token = jwtService.generateToken(user);
 
             assertThat(token).isNotBlank();
             assertEquals(3, token.split("\\.").length);
+        }
+
+        @Test
+        void shouldAttachIdAndRoleClaimsToToken() {
+            String token = jwtService.generateToken(user);
+
+            SecretKey secretKey = Keys
+                    .hmacShaKeyFor(Decoders.BASE64.decode(TEST_SECRET));
+
+            Claims claims = Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            assertEquals(user.getId(), claims.get("userId"));
+            assertEquals("ROLE_" + Role.USER, claims.get("userRole"));
         }
     }
 
@@ -44,7 +67,7 @@ public class JwtServiceTests {
     class ExtractUsernameTests {
         @Test
         void shouldCorrectlyExtractUsername() {
-            String token = jwtService.generateToken(userDetails);
+            String token = jwtService.generateToken(user);
 
             String username = jwtService.extractUsername(token);
             assertEquals("testUser", username);
@@ -65,15 +88,15 @@ public class JwtServiceTests {
     class IsTokenValidTests {
         @Test
         void shouldReturnTrueIfTokenIsValid() {
-            String token = jwtService.generateToken(userDetails);
+            String token = jwtService.generateToken(user);
 
-            boolean valid = jwtService.isTokenValid(token, userDetails);
+            boolean valid = jwtService.isTokenValid(token, user);
             assertTrue(valid);
         }
 
         @Test
         void shouldReturnFalseForDifferentUser() {
-            String token = jwtService.generateToken(userDetails);
+            String token = jwtService.generateToken(user);
             UserDetails anotherUserDetails = new User(
                     "anotherUser",
                     "password",
@@ -87,9 +110,9 @@ public class JwtServiceTests {
         @Test
         void shouldReturnFalseForExpiredToken() {
             jwtService = new JwtService(TEST_SECRET, -ONE_HOUR_IN_MILLIS);
-            String token = jwtService.generateToken(userDetails);
+            String token = jwtService.generateToken(user);
 
-            boolean valid = jwtService.isTokenValid(token, userDetails);
+            boolean valid = jwtService.isTokenValid(token, user);
             assertFalse(valid);
         }
 
@@ -98,7 +121,7 @@ public class JwtServiceTests {
             String malformedToken =
                     "not.a.valid.token";
 
-            boolean valid = jwtService.isTokenValid(malformedToken, userDetails);
+            boolean valid = jwtService.isTokenValid(malformedToken, user);
             assertFalse(valid);
         }
     }

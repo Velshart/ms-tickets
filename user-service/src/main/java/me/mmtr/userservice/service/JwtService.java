@@ -1,8 +1,11 @@
 package me.mmtr.userservice.service;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import me.mmtr.userservice.model.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,9 +13,6 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 
 @Service("userServiceJwtService")
@@ -28,16 +28,17 @@ public class JwtService {
         this.jwtExpiration = jwtExpiration;
     }
 
-    public String generateToken(UserDetails userDetails) {
-        Map<String, List<String>> claims = new HashMap<>();
-        List<String> roles = userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority).toList();
-
-        claims.put("roles", roles);
+    public String generateToken(User user) {
+        String userRole = user.getAuthorities()
+                .stream()
+                .findFirst()
+                .map(GrantedAuthority::getAuthority)
+                .orElseThrow(() -> new IllegalStateException("User has no authorities"));
 
         return Jwts.builder()
-                .claims(claims)
-                .subject(userDetails.getUsername())
+                .claim("userRole", userRole)
+                .claim("userId", user.getId())
+                .subject(user.getUsername())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getSigningKey())
