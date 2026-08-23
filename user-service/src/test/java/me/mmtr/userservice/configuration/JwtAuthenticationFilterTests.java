@@ -1,6 +1,7 @@
 package me.mmtr.userservice.configuration;
 
-import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -47,6 +48,9 @@ public class JwtAuthenticationFilterTests {
     @Mock
     private FilterChain filterChain;
 
+    @Mock
+    private Claims claims;
+
     @InjectMocks
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
@@ -81,7 +85,10 @@ public class JwtAuthenticationFilterTests {
     void shouldNotSetAuthenticationWhenUserIsAlreadyAuthenticated() throws ServletException, IOException {
         when(request.getHeader("Authorization"))
                 .thenReturn(AUTHORIZATION_HEADER);
-        when(jwtService.extractUsername(TOKEN)).thenReturn(USERNAME);
+
+        when(jwtService.parseToken(TOKEN))
+                .thenReturn(claims);
+        when(claims.get("username", String.class)).thenReturn(USERNAME);
 
         UserDetails user =
                 new User(USERNAME, "password", Role.USER);
@@ -106,17 +113,15 @@ public class JwtAuthenticationFilterTests {
     void shouldNotSetAuthenticationWhenTokenIsInvalid() throws ServletException, IOException {
         when(request.getHeader("Authorization"))
                 .thenReturn(AUTHORIZATION_HEADER);
-        when(jwtService.extractUsername(TOKEN)).thenReturn(USERNAME);
 
-        UserDetails user =
-                new User(USERNAME, "password", Role.USER);
-        when(userDetailsService.loadUserByUsername(USERNAME)).thenReturn(user);
-
-        when(jwtService.isTokenValid(TOKEN, user)).thenReturn(false);
+        when(jwtService.parseToken(TOKEN))
+                .thenThrow(new JwtException("Invalid token"));
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         assertNull(SecurityContextHolder.getContext().getAuthentication());
+        verify(jwtService).parseToken(TOKEN);
+        verifyNoInteractions(userDetailsService);
         verify(filterChain).doFilter(request, response);
     }
 
@@ -125,14 +130,30 @@ public class JwtAuthenticationFilterTests {
         when(request.getHeader("Authorization"))
                 .thenReturn(AUTHORIZATION_HEADER);
 
-        when(jwtService.extractUsername(TOKEN)).thenThrow(
-                ExpiredJwtException.class
-        );
+        when(jwtService.parseToken(TOKEN))
+                .thenThrow(new JwtException("JWT expired"));
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
         assertNull(SecurityContextHolder.getContext().getAuthentication());
+        verify(jwtService).parseToken(TOKEN);
         verifyNoInteractions(userDetailsService);
-        verifyNoMoreInteractions(jwtService);
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    void shouldNotSetAuthenticationWhenUsernameIsMissing() throws ServletException, IOException {
+        when(request.getHeader("Authorization"))
+                .thenReturn(AUTHORIZATION_HEADER);
+
+        when(jwtService.parseToken(TOKEN)).thenReturn(claims);
+        when(claims.get("username", String.class)).thenReturn(null);
+
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        verify(jwtService).parseToken(TOKEN);
+        verifyNoInteractions(userDetailsService);
         verify(filterChain).doFilter(request, response);
     }
 
@@ -141,12 +162,12 @@ public class JwtAuthenticationFilterTests {
         when(request.getHeader("Authorization"))
                 .thenReturn(AUTHORIZATION_HEADER);
 
-        when(jwtService.extractUsername(TOKEN)).thenReturn(USERNAME);
+        when(jwtService.parseToken(TOKEN)).thenReturn(claims);
+        when(claims.get("username", String.class)).thenReturn(USERNAME);
 
         UserDetails user =
                 new User(USERNAME, "password", Role.USER);
         when(userDetailsService.loadUserByUsername(USERNAME)).thenReturn(user);
-        when(jwtService.isTokenValid(TOKEN, user)).thenReturn(true);
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
         Authentication authentication =
@@ -159,5 +180,8 @@ public class JwtAuthenticationFilterTests {
                         .getAuthorities()
                         .contains(new SimpleGrantedAuthority("ROLE_" + Role.USER))
         );
+        verify(jwtService).parseToken(TOKEN);
+        verify(userDetailsService).loadUserByUsername(USERNAME);
+        verify(filterChain).doFilter(request, response);
     }
 }

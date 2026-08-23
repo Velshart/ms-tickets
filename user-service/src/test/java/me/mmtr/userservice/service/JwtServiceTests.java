@@ -1,7 +1,6 @@
 package me.mmtr.userservice.service;
 
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -10,12 +9,11 @@ import me.mmtr.userservice.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.crypto.SecretKey;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class JwtServiceTests {
     private static final long ONE_HOUR_IN_MILLIS = 3600000;
@@ -33,6 +31,7 @@ public class JwtServiceTests {
                 "password",
                 Role.USER
         );
+        user.setId(1L);
     }
 
     @Nested
@@ -46,83 +45,33 @@ public class JwtServiceTests {
         }
 
         @Test
-        void shouldAttachIdAndRoleClaimsToToken() {
+        void shouldAttachUsernameAndRoleClaimsToToken() {
             String token = jwtService.generateToken(user);
 
+            Claims claims = parseToken(token);
+
+            assertEquals(user.getUsername(), claims.get("username"));
+            assertEquals("ROLE_" + Role.USER, claims.get("userRole"));
+        }
+
+        @Test
+        void shouldSetCorrectExpirationTime() {
+            String token = jwtService.generateToken(user);
+            Claims claims = parseToken(token);
+
+            assertThat(claims.getExpiration()).isAfter(claims.getIssuedAt());
+        }
+
+        private Claims parseToken(String token) {
             SecretKey secretKey = Keys
                     .hmacShaKeyFor(Decoders.BASE64.decode(TEST_SECRET));
 
-            Claims claims = Jwts.parser()
+            return Jwts.parser()
                     .verifyWith(secretKey)
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
 
-            assertEquals(user.getId(), claims.get("userId"));
-            assertEquals("ROLE_" + Role.USER, claims.get("userRole"));
-        }
-    }
-
-    @Nested
-    class ExtractUsernameTests {
-        @Test
-        void shouldCorrectlyExtractUsername() {
-            String token = jwtService.generateToken(user);
-
-            String username = jwtService.extractUsername(token);
-            assertEquals("testUser", username);
-        }
-
-        @Test
-        void shouldThrowExceptionForMalformedToken() {
-            String token = "not.a.valid.token";
-
-            assertThrows(
-                    JwtException.class,
-                    () -> jwtService.extractUsername(token)
-            );
-        }
-    }
-
-    @Nested
-    class IsTokenValidTests {
-        @Test
-        void shouldReturnTrueIfTokenIsValid() {
-            String token = jwtService.generateToken(user);
-
-            boolean valid = jwtService.isTokenValid(token, user);
-            assertTrue(valid);
-        }
-
-        @Test
-        void shouldReturnFalseForDifferentUser() {
-            String token = jwtService.generateToken(user);
-            UserDetails anotherUserDetails = new User(
-                    "anotherUser",
-                    "password",
-                    Role.USER
-            );
-
-            boolean valid = jwtService.isTokenValid(token, anotherUserDetails);
-            assertFalse(valid);
-        }
-
-        @Test
-        void shouldReturnFalseForExpiredToken() {
-            jwtService = new JwtService(TEST_SECRET, -ONE_HOUR_IN_MILLIS);
-            String token = jwtService.generateToken(user);
-
-            boolean valid = jwtService.isTokenValid(token, user);
-            assertFalse(valid);
-        }
-
-        @Test
-        void shouldReturnFalseForMalformedToken() {
-            String malformedToken =
-                    "not.a.valid.token";
-
-            boolean valid = jwtService.isTokenValid(malformedToken, user);
-            assertFalse(valid);
         }
     }
 }

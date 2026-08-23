@@ -1,5 +1,6 @@
 package me.mmtr.userservice.configuration;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -47,7 +48,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String jwt = getJwtTokenFromAuthorizationHeader(authorizationHeader);
 
         try {
-            String username = jwtService.extractUsername(jwt);
+            Claims claims = jwtService.parseToken(jwt);
+            String username = claims.get("username", String.class);
             if (
                     username != null &&
                             SecurityContextHolder
@@ -57,7 +59,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UserDetails userDetails =
                         userDetailsService.loadUserByUsername(username);
 
-                if (jwtService.isTokenValid(jwt, userDetails)) {
+                if (username.equals(userDetails.getUsername())) {
                     UsernamePasswordAuthenticationToken authenticationToken =
                             new UsernamePasswordAuthenticationToken(
                                     userDetails,
@@ -70,7 +72,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             .setAuthentication(authenticationToken);
                 }
             }
-        } catch (JwtException _) {
+        } catch (JwtException | IllegalArgumentException _) {
         }
 
         filterChain.doFilter(request, response);
