@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 
-@Service("userServiceJwtService")
+@Service
 public class JwtService {
     private final long jwtExpiration;
 
