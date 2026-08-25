@@ -2,7 +2,7 @@ package me.mmtr.userservice.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import me.mmtr.common.JwtParser;
+import me.mmtr.common.jwt.JwtParser;
 import me.mmtr.userservice.model.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
@@ -44,48 +44,4 @@ public class JwtService {
     public Claims parseToken(String token) {
         return jwtParser.parse(token);
     }
-
-//    public String extractUsername(String token) {
-//        return extractClaim(token, claims -> claims.get("username").toString());
-//    }
-
-//    public boolean isTokenValid(String token, UserDetails userDetails) {
-//        try {
-//            String username = extractUsername(token);
-//            return (username.equals(userDetails.getUsername())) &&
-//                    !isTokenExpired(token);
-//        } catch (JwtException e) {
-//            return false;
-//        }
-//    }
-
-//    public boolean isTokenValid(String token, UserDetails userDetails) {
-//        try {
-//            Claims claims = parseToken(token);
-//            String username = claims.get("username").toString();
-//
-//            return username.equals(userDetails.getUsername());
-//        } catch (Exception e) {
-//            return false;
-//        }
-//    }
-
-//    private boolean isTokenExpired(String token) {
-//        return extractClaim(token, Claims::getExpiration).before(new Date());
-//    }
-
-//    private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-//        Claims claims = Jwts.parser()
-//                .verifyWith(getSigningKey())
-//                .build()
-//                .parseSignedClaims(token)
-//                .getPayload();
-//
-//        return claimsResolver.apply(claims);
-//    }
-
-//    private SecretKey getSigningKey() {
-//        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
-//        return Keys.hmacShaKeyFor(keyBytes);
-//    }
 }

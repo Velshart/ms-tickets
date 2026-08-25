@@ -1,4 +1,4 @@
-package me.mmtr.common;
+package me.mmtr.common.jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
