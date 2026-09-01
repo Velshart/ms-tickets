@@ -28,8 +28,9 @@ public class CustomUserDetailsServiceTests {
     public void shouldFindUserByUsername() {
         String username = "testUser";
         String password = "password";
+        String email = "test@example.com";
         Role role = Role.USER;
-        User user = new User(username, password, role);
+        User user = new User(username, email, password, role);
 
         when(userRepository.findByUsername(username))
                 .thenReturn(Optional.of(user));

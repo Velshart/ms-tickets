@@ -27,6 +27,7 @@ public class UserServiceTests {
 
     private static final Long TEST_USER_ID = 1L;
     private static final String TEST_USER_NAME = "testUser";
+    private static final String TEST_USER_EMAIL = "test@example.com";
     @Mock
     private UserRepository userRepository;
     @InjectMocks
@@ -38,6 +39,7 @@ public class UserServiceTests {
         final String testUserPassword = "password";
         testUser = new User(
                 TEST_USER_NAME,
+                TEST_USER_EMAIL,
                 testUserPassword,
                 Role.SUPER_ADMIN
         );
@@ -102,6 +104,7 @@ public class UserServiceTests {
             long targetId = 2L;
             User target = new User(
                     "testUser2",
+                    TEST_USER_EMAIL,
                     "password",
                     Role.USER
             );
@@ -134,6 +137,7 @@ public class UserServiceTests {
             long requesterId = 2L;
             User requester = new User(
                     "testUser2",
+                    TEST_USER_EMAIL,
                     "password",
                     Role.USER
             );

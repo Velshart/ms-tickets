@@ -46,6 +46,7 @@ public class AuthenticationServiceTests {
             String jwtToken = "valid.jwt.token";
             RegisterRequest registerRequest = new RegisterRequest(
                     "testUser",
+                    "test@example.com",
                     "password"
             );
             String encodedPassword = "encodedPassword";
@@ -78,6 +79,7 @@ public class AuthenticationServiceTests {
         void shouldThrowExceptionWhenUsernameAlreadyExists() {
             RegisterRequest registerRequest = new RegisterRequest(
                     "testUser",
+                    "test@example.com",
                     "password"
             );
 
@@ -107,6 +109,7 @@ public class AuthenticationServiceTests {
 
             User user = new User(
                     "testUser",
+                    "test@example.com",
                     "password",
                     Role.USER
             );

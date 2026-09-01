@@ -33,6 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class UserControllerTests {
     private final long ID = 1L;
     private static final String USERNAME = "test_user";
+    private static final String EMAIL = "test@example.com";
     private static final String PASSWORD = "password";
     @MockitoBean
     private AuthenticationService authenticationService;
@@ -52,6 +53,7 @@ public class UserControllerTests {
     public void setup() {
         user = new User(
                 USERNAME,
+                EMAIL,
                 PASSWORD,
                 Role.USER
         );
@@ -91,6 +93,7 @@ public class UserControllerTests {
         void shouldReturnCreatedWithTokenAfterSuccessfulRegistration() throws Exception {
             RegisterRequest registerRequest = new RegisterRequest(
                     USERNAME,
+                    EMAIL,
                     PASSWORD
             );
 
@@ -109,6 +112,7 @@ public class UserControllerTests {
         void shouldReturnConflictWhenUsernameAlreadyExists() throws Exception {
             RegisterRequest registerRequest = new RegisterRequest(
                     USERNAME,
+                    EMAIL,
                     PASSWORD
             );
 

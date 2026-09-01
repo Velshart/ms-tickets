@@ -13,9 +13,10 @@ class UserRegistrationAndLoggingInIntegrationTest extends UserServiceIntegration
     @Test
     void shouldCorrectlyRegisterNewAccountAndAuthenticate() throws Exception {
         String username = "user";
+        String email = "test@example.com";
         String password = "password";
         RegisterRequest registerRequest =
-                new RegisterRequest(username, password);
+                new RegisterRequest(username, email, password);
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)

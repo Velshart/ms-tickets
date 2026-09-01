@@ -28,6 +28,7 @@ public class JwtServiceTests {
 
         user = new User(
                 "testUser",
+                "test@example.com",
                 "password",
                 Role.USER
         );
@@ -51,6 +52,7 @@ public class JwtServiceTests {
             Claims claims = parseToken(token);
 
             assertEquals(user.getUsername(), claims.get("username"));
+            assertEquals(user.getEmail(), claims.get("email"));
             assertEquals("ROLE_" + Role.USER, claims.get("userRole"));
         }
 

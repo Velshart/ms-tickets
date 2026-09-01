@@ -41,6 +41,7 @@ public class AuthenticationService {
 
         User user = new User(
                 registerRequest.username(),
+                registerRequest.email(),
                 passwordEncoder.encode(registerRequest.password()),
                 role
         );

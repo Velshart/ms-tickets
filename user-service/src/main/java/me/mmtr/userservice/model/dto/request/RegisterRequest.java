@@ -1,10 +1,11 @@
 package me.mmtr.userservice.model.dto.request;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record RegisterRequest(
-        @NotBlank
+        @NotBlank(message = "Username cannot be blank")
         @Size(
                 min = 3,
                 max = 50,
@@ -12,7 +13,11 @@ public record RegisterRequest(
         )
         String username,
 
-        @NotBlank
+        @Email(message = "Email address must be valid")
+        @NotBlank(message = "Email address cannot be bank")
+        String email,
+
+        @NotBlank(message = "Password cannot be blank")
         @Size(
                 min = 6,
                 message = "Password must be at least 6 characters long"

@@ -29,7 +29,10 @@ public class UserManagementIntegrationTest extends UserServiceIntegrationTest {
     void shouldDeleteUserAndRemoveItFromDatabase() throws Exception {
         String username = "user_to_delete";
         RegisterRequest registerRequest = new RegisterRequest(
-                username, "password");
+                username,
+                "test@example.com",
+                "password"
+        );
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)

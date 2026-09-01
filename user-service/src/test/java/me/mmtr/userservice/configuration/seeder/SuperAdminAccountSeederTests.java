@@ -19,6 +19,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class SuperAdminAccountSeederTests {
     private static final String USERNAME = "admin";
+    private static final String EMAIL = "admin@example.com";
     private static final String PASSWORD = "password123";
     @Mock
     private AuthenticationService authenticationService;
@@ -34,6 +35,7 @@ public class SuperAdminAccountSeederTests {
                 authenticationService,
                 userRepository,
                 USERNAME,
+                EMAIL,
                 PASSWORD
         );
     }

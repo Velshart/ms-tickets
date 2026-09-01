@@ -15,10 +15,11 @@ public class UserSecurityIntegrationTest extends UserServiceIntegrationTest {
     @Test
     void shouldReturnForbiddenWhenRegularUserTriesToRegisterAdmin() throws Exception {
         String username = "user";
+        String email = "test@example.com";
         String password = "password";
         RegisterRequest registerRequest =
                 new RegisterRequest(
-                        username, password
+                        username, email, password
                 );
 
         MvcResult result = mockMvc.perform(post("/api/auth/register")
@@ -32,8 +33,12 @@ public class UserSecurityIntegrationTest extends UserServiceIntegrationTest {
                 AuthenticationResponse.class
         ).token();
 
-        RegisterRequest registerAdminRequest =
-                new RegisterRequest("admin", "password");
+        RegisterRequest registerAdminRequest = new RegisterRequest(
+                        "admin",
+                "admin@example.com",
+                "password"
+        );
+
         mockMvc.perform(post("/api/users/register-admin")
                         .header(
                                 HttpHeaders.AUTHORIZATION,
