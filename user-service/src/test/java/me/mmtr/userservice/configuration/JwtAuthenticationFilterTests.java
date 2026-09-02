@@ -90,8 +90,12 @@ public class JwtAuthenticationFilterTests {
                 .thenReturn(claims);
         when(claims.get("username", String.class)).thenReturn(USERNAME);
 
-        UserDetails user =
-                new User(USERNAME, "password", Role.USER);
+        UserDetails user = new User(
+                USERNAME,
+                "test@example.com",
+                "password",
+                Role.USER
+        );
 
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(USERNAME, null,
@@ -165,8 +169,12 @@ public class JwtAuthenticationFilterTests {
         when(jwtService.parseToken(TOKEN)).thenReturn(claims);
         when(claims.get("username", String.class)).thenReturn(USERNAME);
 
-        UserDetails user =
-                new User(USERNAME, "password", Role.USER);
+        UserDetails user = new User(
+                USERNAME,
+                "test@example.com",
+                "password",
+                Role.USER
+        );
         when(userDetailsService.loadUserByUsername(USERNAME)).thenReturn(user);
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
