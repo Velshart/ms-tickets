@@ -1,11 +1,14 @@
 package me.mmtr.userservice.service;
 
+import jakarta.transaction.Transactional;
 import me.mmtr.userservice.model.Role;
 import me.mmtr.userservice.model.User;
+import me.mmtr.userservice.model.dto.messaging.UserDeletedEvent;
 import me.mmtr.userservice.model.dto.response.UserResponse;
 import me.mmtr.userservice.model.exception.InsufficientPrivilegesException;
 import me.mmtr.userservice.model.exception.UserNotFoundException;
 import me.mmtr.userservice.repository.UserRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,9 +17,14 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher publisher;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(
+            UserRepository userRepository,
+            ApplicationEventPublisher applicationEventPublisher
+    ) {
         this.userRepository = userRepository;
+        this.publisher = applicationEventPublisher;
     }
 
     public UserResponse getById(Long id) {
@@ -31,6 +39,7 @@ public class UserService {
                 .toList();
     }
 
+    @Transactional
     public void deleteUser(Long id, User requester) {
         User target = getUserById(id);
 
@@ -38,6 +47,10 @@ public class UserService {
             throw new InsufficientPrivilegesException();
         }
         userRepository.delete(target);
+        publisher.publishEvent(new UserDeletedEvent(
+                target.getId(),
+                target.getEmail()
+        ));
     }
 
     private User getUserById(Long id) {

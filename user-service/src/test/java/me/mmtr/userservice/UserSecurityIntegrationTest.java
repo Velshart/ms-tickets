@@ -34,7 +34,7 @@ public class UserSecurityIntegrationTest extends UserServiceIntegrationTest {
         ).token();
 
         RegisterRequest registerAdminRequest = new RegisterRequest(
-                        "admin",
+                "admin",
                 "admin@example.com",
                 "password"
         );

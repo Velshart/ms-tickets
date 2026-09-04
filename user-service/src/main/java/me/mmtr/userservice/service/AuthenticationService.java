@@ -1,11 +1,14 @@
 package me.mmtr.userservice.service;
 
+import jakarta.transaction.Transactional;
 import me.mmtr.userservice.model.Role;
 import me.mmtr.userservice.model.User;
+import me.mmtr.userservice.model.dto.messaging.UserCreatedEvent;
 import me.mmtr.userservice.model.dto.request.AuthenticationRequest;
 import me.mmtr.userservice.model.dto.response.AuthenticationResponse;
 import me.mmtr.userservice.model.dto.request.RegisterRequest;
 import me.mmtr.userservice.repository.UserRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -18,19 +21,23 @@ public class AuthenticationService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
+    private final ApplicationEventPublisher publisher;
 
     public AuthenticationService(
             UserRepository userRepository,
             JwtService jwtService,
             AuthenticationManager authenticationManager,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            ApplicationEventPublisher applicationEventPublisher
     ) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
+        this.publisher = applicationEventPublisher;
     }
 
+    @Transactional
     public AuthenticationResponse register(
             RegisterRequest registerRequest,
             Role role
@@ -46,9 +53,13 @@ public class AuthenticationService {
                 role
         );
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
 
-        return new AuthenticationResponse(jwtService.generateToken(user));
+        publisher.publishEvent(new UserCreatedEvent(
+                savedUser.getId(),
+                savedUser.getEmail()
+        ));
+        return new AuthenticationResponse(jwtService.generateToken(savedUser));
     }
 
     public AuthenticationResponse login(

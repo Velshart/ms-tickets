@@ -2,6 +2,7 @@ package me.mmtr.userservice.service;
 
 import me.mmtr.userservice.model.Role;
 import me.mmtr.userservice.model.User;
+import me.mmtr.userservice.model.dto.messaging.UserCreatedEvent;
 import me.mmtr.userservice.model.dto.request.AuthenticationRequest;
 import me.mmtr.userservice.model.dto.request.RegisterRequest;
 import me.mmtr.userservice.model.dto.response.AuthenticationResponse;
@@ -13,6 +14,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -35,6 +37,8 @@ public class AuthenticationServiceTests {
     private AuthenticationManager authenticationManager;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private ApplicationEventPublisher publisher;
 
     @InjectMocks
     private AuthenticationService authenticationService;
@@ -56,6 +60,14 @@ public class AuthenticationServiceTests {
             when(passwordEncoder.encode(registerRequest.password()))
                     .thenReturn(encodedPassword);
 
+            User savedUser = new User(
+                    registerRequest.username(),
+                    registerRequest.email(),
+                    registerRequest.password(),
+                    Role.USER
+            );
+            when(userRepository.save(any(User.class))).thenReturn(savedUser);
+
             when(jwtService.generateToken(any(User.class)))
                     .thenReturn(jwtToken);
 
@@ -71,6 +83,13 @@ public class AuthenticationServiceTests {
             assertEquals(registerRequest.username(), capturedUser.getUsername());
             assertEquals(encodedPassword, capturedUser.getPassword());
             assertEquals(Role.USER, capturedUser.getRole());
+
+            ArgumentCaptor<UserCreatedEvent> eventCaptor = ArgumentCaptor.captor();
+            verify(publisher).publishEvent(eventCaptor.capture());
+
+            UserCreatedEvent capturedEvent = eventCaptor.getValue();
+            assertEquals(savedUser.getId(), capturedEvent.id());
+            assertEquals(savedUser.getEmail(), capturedEvent.email());
 
             assertEquals(jwtToken, response.token());
         }

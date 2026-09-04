@@ -2,6 +2,7 @@ package me.mmtr.userservice.service;
 
 import me.mmtr.userservice.model.Role;
 import me.mmtr.userservice.model.User;
+import me.mmtr.userservice.model.dto.messaging.UserDeletedEvent;
 import me.mmtr.userservice.model.dto.response.UserResponse;
 import me.mmtr.userservice.model.exception.InsufficientPrivilegesException;
 import me.mmtr.userservice.model.exception.UserNotFoundException;
@@ -10,9 +11,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Collections;
 import java.util.List;
@@ -30,6 +33,8 @@ public class UserServiceTests {
     private static final String TEST_USER_EMAIL = "test@example.com";
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private ApplicationEventPublisher publisher;
     @InjectMocks
     private UserService userService;
     private User testUser;
@@ -116,6 +121,14 @@ public class UserServiceTests {
             userService.deleteUser(targetId, testUser);
 
             verify(userRepository).delete(target);
+
+            ArgumentCaptor<UserDeletedEvent> eventCaptor =
+                    ArgumentCaptor.captor();
+            verify(publisher).publishEvent(eventCaptor.capture());
+
+            UserDeletedEvent capturedEvent = eventCaptor.getValue();
+            assertEquals(target.getEmail(), capturedEvent.email());
+            assertEquals(targetId, capturedEvent.id());
         }
 
         @Test
