@@ -1,4 +1,4 @@
-package me.mmtr.ticketservice;
+package me.mmtr.ticketservice.service;
 
 import jakarta.transaction.Transactional;
 import me.mmtr.ticketservice.model.Event;

@@ -1,4 +1,4 @@
-package me.mmtr.ticketservice;
+package me.mmtr.ticketservice.service;
 
 import jakarta.transaction.Transactional;
 import me.mmtr.ticketservice.model.Event;
@@ -9,6 +9,7 @@ import me.mmtr.ticketservice.model.dto.messaging.EventDeletedEvent;
 import me.mmtr.ticketservice.model.dto.messaging.EventStatusChangedEvent;
 import me.mmtr.ticketservice.model.dto.messaging.EventUpdatedEvent;
 import me.mmtr.ticketservice.model.dto.ticket.OrderResponse;
+import me.mmtr.ticketservice.model.exception.EventAlreadyRegisteredException;
 import me.mmtr.ticketservice.repository.EventRepository;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -36,15 +37,18 @@ public class EventManagementService {
     }
 
     public EventResponse createEvent(CreateUpdateEventRequest eventRequest) {
-        Event event = new Event(
-                eventRequest.name(),
-                eventRequest.price(),
-                eventRequest.startDate(),
-                eventRequest.endDate(),
-                eventRequest.availableTickets()
-        );
-
-        return EventResponse.from(eventRepository.save(event));
+        if (eventRepository.existsByName(eventRequest.name())) {
+            Event event = new Event(
+                    eventRequest.name(),
+                    eventRequest.price(),
+                    eventRequest.startDate(),
+                    eventRequest.endDate(),
+                    eventRequest.availableTickets()
+            );
+            return EventResponse.from(eventRepository.save(event));
+        } else {
+            throw new EventAlreadyRegisteredException(eventRequest.name());
+        }
     }
 
     @Transactional

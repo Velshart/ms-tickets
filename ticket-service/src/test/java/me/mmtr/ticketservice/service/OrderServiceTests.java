@@ -1,4 +1,4 @@
-package me.mmtr.ticketservice;
+package me.mmtr.ticketservice.service;
 
 import me.mmtr.ticketservice.model.Event;
 import me.mmtr.ticketservice.model.EventStatus;
