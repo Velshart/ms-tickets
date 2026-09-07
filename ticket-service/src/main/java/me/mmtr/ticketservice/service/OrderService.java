@@ -40,7 +40,7 @@ public class OrderService {
             Long userId
     ) {
         Long eventId = buyTicketRequest.eventId();
-        long ticketsAmount = buyTicketRequest.tickets();
+        long ticketsAmount = buyTicketRequest.ticketQuantity();
 
         Event event = eventQueryService.getEventEntity(eventId);
 

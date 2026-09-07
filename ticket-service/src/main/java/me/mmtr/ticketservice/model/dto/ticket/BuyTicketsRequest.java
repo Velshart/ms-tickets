@@ -9,5 +9,5 @@ public record BuyTicketsRequest(
         Long eventId,
         @NotNull(message = "Number of tickets cannot be null.")
         @Positive(message = "Number of tickets must be positive.")
-        long tickets
+        long ticketQuantity
 ) {}
