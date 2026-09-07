@@ -15,7 +15,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import static org.mockito.Mockito.verify;
 
-public class UserNotificationListenerIntegrationTest extends UserServiceIntegrationTest {
+public class UserNotificationListenerIntegrationTest extends UserServiceModuleIntegrationTest {
 
     private static final Long USER_ID = 1L;
     private static final String USER_EMAIL = "test@example.com";

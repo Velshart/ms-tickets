@@ -12,7 +12,7 @@ import tools.jackson.databind.ObjectMapper;
 @Transactional
 @SpringBootTest
 @AutoConfigureMockMvc
-public abstract class UserServiceIntegrationTest {
+public abstract class UserServiceModuleIntegrationTest {
     @ServiceConnection
     protected static final PostgreSQLContainer postgres =
             new PostgreSQLContainer("postgres:16-alpine");

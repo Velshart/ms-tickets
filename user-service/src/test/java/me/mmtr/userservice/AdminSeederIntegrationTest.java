@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class AdminSeederIntegrationTest extends UserServiceIntegrationTest {
+public class AdminSeederIntegrationTest extends UserServiceModuleIntegrationTest {
     @Autowired
     protected UserRepository userRepository;
     @Value("${super.admin.username}")

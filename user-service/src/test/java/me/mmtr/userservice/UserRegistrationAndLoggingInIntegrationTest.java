@@ -8,7 +8,7 @@ import org.springframework.http.MediaType;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-class UserRegistrationAndLoggingInIntegrationTest extends UserServiceIntegrationTest {
+class UserRegistrationAndLoggingInIntegrationTest extends UserServiceModuleIntegrationTest {
 
     @Test
     void shouldCorrectlyRegisterNewAccountAndAuthenticate() throws Exception {

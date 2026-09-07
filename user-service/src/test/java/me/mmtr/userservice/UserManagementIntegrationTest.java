@@ -17,7 +17,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class UserManagementIntegrationTest extends UserServiceIntegrationTest {
+public class UserManagementIntegrationTest extends UserServiceModuleIntegrationTest {
     @Autowired
     protected UserRepository userRepository;
     @Value("${super.admin.username}")

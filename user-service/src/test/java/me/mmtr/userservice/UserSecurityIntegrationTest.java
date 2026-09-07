@@ -10,7 +10,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class UserSecurityIntegrationTest extends UserServiceIntegrationTest {
+public class UserSecurityIntegrationTest extends UserServiceModuleIntegrationTest {
 
     @Test
     void shouldReturnForbiddenWhenRegularUserTriesToRegisterAdmin() throws Exception {
