@@ -37,7 +37,7 @@ public class EventManagementService {
     }
 
     public EventResponse createEvent(CreateUpdateEventRequest eventRequest) {
-        if (eventRepository.existsByName(eventRequest.name())) {
+        if (!eventRepository.existsByName(eventRequest.name())) {
             Event event = new Event(
                     eventRequest.name(),
                     eventRequest.price(),
