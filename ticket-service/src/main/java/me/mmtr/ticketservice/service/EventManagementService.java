@@ -15,6 +15,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Service
@@ -60,10 +61,14 @@ public class EventManagementService {
 
         String oldName = event.getName();
         BigDecimal oldPrice = event.getPrice();
+        OffsetDateTime oldStartDate = event.getStartDate();
+        OffsetDateTime oldEndDate = event.getEndDate();
         long oldAvailableTickets = event.getAvailableTickets();
 
         event.setName(eventRequest.name());
         event.setPrice(eventRequest.price());
+        event.setStartDate(eventRequest.startDate());
+        event.setEndDate(eventRequest.endDate());
         event.setAvailableTickets(eventRequest.availableTickets());
 
         Event savedEvent = eventRepository.save(event);
@@ -71,9 +76,13 @@ public class EventManagementService {
         publisher.publishEvent(new EventUpdatedEvent(
                 oldName,
                 oldPrice,
+                oldStartDate,
+                oldEndDate,
                 oldAvailableTickets,
                 savedEvent.getName(),
                 savedEvent.getPrice(),
+                savedEvent.getStartDate(),
+                savedEvent.getEndDate(),
                 savedEvent.getAvailableTickets(),
                 extractUserIdsFromOrdersByEventId(id)
         ));

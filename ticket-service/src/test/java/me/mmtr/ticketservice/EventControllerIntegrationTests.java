@@ -185,8 +185,8 @@ public class EventControllerIntegrationTests extends TicketServiceModuleIntegrat
             EventResponse updatedEvent = eventQueryService.getEvent(eventResponse.id());
             assertEquals(REQUEST.name(), updatedEvent.name());
             assertEquals(REQUEST.price(), updatedEvent.price());
-            assertTrue(eventResponse.startDate().isEqual(updatedEvent.startDate()));
-            assertTrue(eventResponse.endDate().isEqual(updatedEvent.endDate()));
+            assertTrue(REQUEST.startDate().isEqual(updatedEvent.startDate()));
+            assertTrue(REQUEST.endDate().isEqual(updatedEvent.endDate()));
             assertEquals(
                     REQUEST.availableTickets(),
                     updatedEvent.availableTickets()

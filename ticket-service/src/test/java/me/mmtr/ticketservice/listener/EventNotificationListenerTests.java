@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import static org.mockito.Mockito.verify;
@@ -49,8 +50,16 @@ public class EventNotificationListenerTests {
         @Test
         void shouldSendEventUpdatedMessageToRabbitMQ() {
             EventUpdatedEvent event = new EventUpdatedEvent(
-                    "Old", BigDecimal.TEN, 100L,
-                    "New", BigDecimal.valueOf(20), 150L,
+                    "Old",
+                    BigDecimal.TEN,
+                    OffsetDateTime.now().plusDays(1),
+                    OffsetDateTime.now().plusDays(2),
+                    100L,
+                    "New",
+                    BigDecimal.valueOf(20),
+                    OffsetDateTime.now().plusDays(2),
+                    OffsetDateTime.now().plusDays(3),
+                    150L,
                     USER_IDS
             );
 

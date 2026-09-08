@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.javamail.JavaMailSender;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -163,9 +164,16 @@ public class MailServiceTests {
         @Test
         void shouldSendEmailToAllUsersOnEventUpdate() throws MessagingException {
             EventUpdatedMessage message = new EventUpdatedMessage(
-                    "Old Event", BigDecimal.valueOf(60.00),
-                    100, "New Event",
-                    BigDecimal.valueOf(50.00), 80,
+                    "Old Event",
+                    BigDecimal.valueOf(60.00),
+                    OffsetDateTime.now().plusDays(1),
+                    OffsetDateTime.now().minusDays(2),
+                    100,
+                    "New Event",
+                    BigDecimal.valueOf(50.00),
+                    OffsetDateTime.now().plusDays(3),
+                    OffsetDateTime.now().plusDays(4),
+                    80,
                     List.of(userIdEmailDto1.userId(), userIdEmailDto2.userId())
             );
 

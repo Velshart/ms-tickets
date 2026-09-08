@@ -19,6 +19,7 @@ import org.testcontainers.rabbitmq.RabbitMQContainer;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import static org.awaitility.Awaitility.await;
@@ -160,11 +161,15 @@ public class NotificationServiceIntegrationTest {
 
         EventUpdatedMessage message = new EventUpdatedMessage(
                 "Old Event",
-                BigDecimal.valueOf(10.0),
-                40,
+                BigDecimal.valueOf(60.00),
+                OffsetDateTime.now().plusDays(1),
+                OffsetDateTime.now().minusDays(2),
+                100,
                 "New Event",
-                BigDecimal.valueOf(20.0),
-                50,
+                BigDecimal.valueOf(50.00),
+                OffsetDateTime.now().plusDays(3),
+                OffsetDateTime.now().plusDays(4),
+                80,
                 List.of(100L)
         );
 

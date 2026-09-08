@@ -15,6 +15,7 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import static org.mockito.Mockito.verify;
@@ -59,10 +60,14 @@ public class EventNotificationListenerIntegrationTests extends TicketServiceModu
     void shouldTriggerListenerAfterTransactionCommitWhenEventUpdated() {
         EventUpdatedEvent event = new EventUpdatedEvent(
                 "Event",
-                BigDecimal.valueOf(10),
+                BigDecimal.TEN,
+                OffsetDateTime.now().plusDays(1),
+                OffsetDateTime.now().plusDays(2),
                 50,
                 "New Event",
                 BigDecimal.valueOf(20),
+                OffsetDateTime.now().plusDays(2),
+                OffsetDateTime.now().plusDays(3),
                 60,
                 List.of(1L, 2L)
         );

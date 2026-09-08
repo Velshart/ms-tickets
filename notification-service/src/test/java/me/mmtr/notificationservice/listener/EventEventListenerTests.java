@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import static org.mockito.Mockito.verify;
@@ -63,10 +64,14 @@ public class EventEventListenerTests {
             List<Long> ownerIds = List.of(1L, 2L);
             EventUpdatedMessage message = new EventUpdatedMessage(
                     "Old Name",
-                    BigDecimal.valueOf(100.0),
+                    BigDecimal.valueOf(60.00),
+                    OffsetDateTime.now().plusDays(1),
+                    OffsetDateTime.now().minusDays(2),
                     100,
                     "New Name",
-                    BigDecimal.valueOf(120.0),
+                    BigDecimal.valueOf(50.00),
+                    OffsetDateTime.now().plusDays(3),
+                    OffsetDateTime.now().plusDays(4),
                     80,
                     ownerIds
             );

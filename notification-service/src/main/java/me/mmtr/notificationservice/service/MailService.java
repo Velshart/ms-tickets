@@ -9,6 +9,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -80,6 +81,7 @@ public class MailService {
     }
 
     public void sendEventUpdatedMail(EventUpdatedMessage message, List<UserIdEmailDto> userIdEmailDtos) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss Z");
 
         String subject = "Event Update: " + message.newName() + " - ms-tickets";
         String content = """
@@ -88,9 +90,11 @@ public class MailService {
                 
                 <h3>Summary of changes:</h3>
                 <ul>
-                    <li><strong>Name:</strong> %s &rarr; <strong>%s</strong></li>
-                    <li><strong>Price:</strong> $%.2f &rarr; <strong>$%.2f</strong></li>
-                    <li><strong>Available Tickets:</strong> %d &rarr; <strong>%d</strong></li>
+                <li><strong>Name:</strong> %s &rarr; <strong>%s</strong></li>
+                <li><strong>Price:</strong> $%.2f &rarr; <strong>$%.2f</strong></li>
+                <li><strong>Start Date:</strong> %s &rarr; <strong>%s</strong></li>
+                <li><strong>End Date:</strong> %s &rarr; <strong>%s</strong></li>
+                <li><strong>Available Tickets:</strong> %d &rarr; <strong>%d</strong></li>
                 </ul>
                 <br>
                 <p>Best regards,<br>ms-tickets</p>
@@ -98,6 +102,8 @@ public class MailService {
                 message.oldName(),
                 message.oldName(), message.newName(),
                 message.oldPrice(), message.newPrice(),
+                message.oldStartDate().format(formatter), message.newStartDate().format(formatter),
+                message.oldEndDate().format(formatter), message.newEndDate().format(formatter),
                 message.oldAvailableTickets(), message.newAvailableTickets()
         );
 
