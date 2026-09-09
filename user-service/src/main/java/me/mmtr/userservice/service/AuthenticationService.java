@@ -7,6 +7,7 @@ import me.mmtr.userservice.model.dto.messaging.UserCreatedEvent;
 import me.mmtr.userservice.model.dto.request.AuthenticationRequest;
 import me.mmtr.userservice.model.dto.response.AuthenticationResponse;
 import me.mmtr.userservice.model.dto.request.RegisterRequest;
+import me.mmtr.userservice.model.dto.response.UserResponse;
 import me.mmtr.userservice.repository.UserRepository;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -38,7 +39,7 @@ public class AuthenticationService {
     }
 
     @Transactional
-    public AuthenticationResponse register(
+    public UserResponse register(
             RegisterRequest registerRequest,
             Role role
     ) {
@@ -59,7 +60,12 @@ public class AuthenticationService {
                 savedUser.getId(),
                 savedUser.getEmail()
         ));
-        return new AuthenticationResponse(jwtService.generateToken(savedUser));
+        return new UserResponse(
+                savedUser.getId(),
+                savedUser.getUsername(),
+                savedUser.getEmail(),
+                savedUser.getRole().toString()
+        );
     }
 
     public AuthenticationResponse login(

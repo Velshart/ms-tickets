@@ -4,6 +4,7 @@ import me.mmtr.userservice.model.Role;
 import me.mmtr.userservice.model.dto.request.AuthenticationRequest;
 import me.mmtr.userservice.model.dto.request.RegisterRequest;
 import me.mmtr.userservice.model.dto.response.AuthenticationResponse;
+import me.mmtr.userservice.model.dto.response.UserResponse;
 import me.mmtr.userservice.service.AuthenticationService;
 import me.mmtr.userservice.service.JwtService;
 import org.junit.jupiter.api.Nested;
@@ -50,8 +51,14 @@ public class AuthenticationControllerTests {
                     PASSWORD
             );
 
+            Long userId = 1L;
             when(authenticationService.register(registerRequest, Role.USER))
-                    .thenReturn(new AuthenticationResponse(TOKEN));
+                    .thenReturn(new UserResponse(
+                            userId,
+                            USERNAME,
+                            EMAIL,
+                            Role.USER.toString()
+                    ));
 
             mockMvc.perform(post("/api/auth/register")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -59,7 +66,10 @@ public class AuthenticationControllerTests {
                                     objectMapper
                                             .writeValueAsString(registerRequest)))
                     .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.token").value(TOKEN));
+                    .andExpect(jsonPath("$.id").value(userId))
+            .andExpect(jsonPath("$.username").value(USERNAME))
+            .andExpect(jsonPath("$.email").value(EMAIL))
+            .andExpect(jsonPath("$.role").value(Role.USER.toString()));
         }
 
         @Test

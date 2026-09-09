@@ -3,7 +3,6 @@ package me.mmtr.userservice.controller;
 import me.mmtr.userservice.model.Role;
 import me.mmtr.userservice.model.User;
 import me.mmtr.userservice.model.dto.request.RegisterRequest;
-import me.mmtr.userservice.model.dto.response.AuthenticationResponse;
 import me.mmtr.userservice.model.dto.response.UserResponse;
 import me.mmtr.userservice.model.exception.InsufficientPrivilegesException;
 import me.mmtr.userservice.model.exception.UserNotFoundException;
@@ -31,10 +30,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(UserController.class)
 public class UserControllerTests {
-    private final long ID = 1L;
     private static final String USERNAME = "test_user";
     private static final String EMAIL = "test@example.com";
     private static final String PASSWORD = "password";
+    private final long ID = 1L;
     @MockitoBean
     private AuthenticationService authenticationService;
     @MockitoBean
@@ -97,15 +96,23 @@ public class UserControllerTests {
                     PASSWORD
             );
 
-            final String token = "generated.jwt.token";
+            Long userId = 1L;
             when(authenticationService.register(registerRequest, Role.ADMIN))
-                    .thenReturn(new AuthenticationResponse(token));
+                    .thenReturn(new UserResponse(
+                            userId,
+                            USERNAME,
+                            EMAIL,
+                            Role.ADMIN.toString()
+                    ));
 
             mockMvc.perform(post("/api/users/register-admin")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(registerRequest)))
                     .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.token").value(token));
+                    .andExpect(jsonPath("$.id").value(userId))
+                    .andExpect(jsonPath("$.username").value(USERNAME))
+                    .andExpect(jsonPath("$.email").value(EMAIL))
+                    .andExpect(jsonPath("$.role").value(Role.ADMIN.toString()));
         }
 
         @Test

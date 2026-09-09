@@ -6,6 +6,7 @@ import me.mmtr.userservice.model.dto.messaging.UserCreatedEvent;
 import me.mmtr.userservice.model.dto.request.AuthenticationRequest;
 import me.mmtr.userservice.model.dto.request.RegisterRequest;
 import me.mmtr.userservice.model.dto.response.AuthenticationResponse;
+import me.mmtr.userservice.model.dto.response.UserResponse;
 import me.mmtr.userservice.repository.UserRepository;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -47,7 +48,6 @@ public class AuthenticationServiceTests {
     class RegisterTests {
         @Test
         void shouldRegisterNewUser() {
-            String jwtToken = "valid.jwt.token";
             RegisterRequest registerRequest = new RegisterRequest(
                     "testUser",
                     "test@example.com",
@@ -68,10 +68,7 @@ public class AuthenticationServiceTests {
             );
             when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
-            when(jwtService.generateToken(any(User.class)))
-                    .thenReturn(jwtToken);
-
-            AuthenticationResponse response = authenticationService.register(
+            UserResponse response = authenticationService.register(
                     registerRequest,
                     Role.USER
             );
@@ -91,7 +88,9 @@ public class AuthenticationServiceTests {
             assertEquals(savedUser.getId(), capturedEvent.id());
             assertEquals(savedUser.getEmail(), capturedEvent.email());
 
-            assertEquals(jwtToken, response.token());
+            assertEquals(savedUser.getUsername(), response.username());
+            assertEquals(savedUser.getEmail(), response.email());
+            assertEquals(savedUser.getRole().toString(), response.role());
         }
 
         @Test

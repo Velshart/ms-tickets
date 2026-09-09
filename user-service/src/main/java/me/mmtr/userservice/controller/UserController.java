@@ -4,7 +4,6 @@ import jakarta.validation.Valid;
 import me.mmtr.userservice.model.Role;
 import me.mmtr.userservice.model.User;
 import me.mmtr.userservice.model.dto.request.RegisterRequest;
-import me.mmtr.userservice.model.dto.response.AuthenticationResponse;
 import me.mmtr.userservice.model.dto.response.UserResponse;
 import me.mmtr.userservice.service.AuthenticationService;
 import me.mmtr.userservice.service.UserService;
@@ -43,7 +42,7 @@ public class UserController {
 
     @PostMapping("/register-admin")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public ResponseEntity<AuthenticationResponse> registerAdmin(
+    public ResponseEntity<UserResponse> registerAdmin(
             @Valid @RequestBody RegisterRequest registerRequest) {
 
         return ResponseEntity.status(HttpStatus.CREATED)

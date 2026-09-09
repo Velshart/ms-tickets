@@ -5,6 +5,7 @@ import me.mmtr.userservice.model.Role;
 import me.mmtr.userservice.model.dto.request.AuthenticationRequest;
 import me.mmtr.userservice.model.dto.response.AuthenticationResponse;
 import me.mmtr.userservice.model.dto.request.RegisterRequest;
+import me.mmtr.userservice.model.dto.response.UserResponse;
 import me.mmtr.userservice.service.AuthenticationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +20,19 @@ public class AuthenticationController {
         this.authenticationService = authenticationService;
     }
 
+//    @PostMapping("/register")
+//    public ResponseEntity<AuthenticationResponse> registerUser(
+//            @Valid @RequestBody RegisterRequest registerRequest
+//    ) {
+//        return ResponseEntity.status(HttpStatus.CREATED)
+//                .body(authenticationService.register(
+//                        registerRequest,
+//                        Role.USER
+//                ));
+//    }
+
     @PostMapping("/register")
-    public ResponseEntity<AuthenticationResponse> registerUser(
+    public ResponseEntity<UserResponse> registerUser(
             @Valid @RequestBody RegisterRequest registerRequest
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
