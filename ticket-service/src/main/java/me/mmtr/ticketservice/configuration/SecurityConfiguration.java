@@ -28,6 +28,7 @@ public class SecurityConfiguration {
     public SecurityFilterChain ticketsApiSecurityFilterChain(HttpSecurity http) {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                .securityMatcher("/api/events/**", "/api/orders/**")
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions
