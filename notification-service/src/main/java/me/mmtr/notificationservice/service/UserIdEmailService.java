@@ -18,7 +18,9 @@ public class UserIdEmailService {
     }
 
     public void create(Long userId, String email) {
-        userIdEmailRepository.save(new UserIdEmail(userId, email));
+        if (!userIdEmailRepository.existsByUserId(userId)) {
+            userIdEmailRepository.save(new UserIdEmail(userId, email));
+        }
     }
 
     public UserIdEmailDto findByUserId(Long userId) {
