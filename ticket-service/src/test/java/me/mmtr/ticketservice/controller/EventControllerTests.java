@@ -1,11 +1,12 @@
 package me.mmtr.ticketservice.controller;
 
 import me.mmtr.common.jwt.JwtParser;
+import me.mmtr.ticketservice.model.dto.event.UpdateEventRequest;
 import me.mmtr.ticketservice.service.EventManagementService;
 import me.mmtr.ticketservice.service.EventQueryService;
 import me.mmtr.ticketservice.model.EventStatus;
 import me.mmtr.ticketservice.model.dto.event.ChangeEventStatusRequest;
-import me.mmtr.ticketservice.model.dto.event.CreateUpdateEventRequest;
+import me.mmtr.ticketservice.model.dto.event.CreateEventRequest;
 import me.mmtr.ticketservice.model.dto.event.EventResponse;
 import me.mmtr.ticketservice.model.exception.EventAlreadyRegisteredException;
 import me.mmtr.ticketservice.model.exception.EventNotFoundException;
@@ -53,7 +54,7 @@ public class EventControllerTests {
     private MockMvc mockMvc;
 
     private EventResponse eventResponse;
-    private CreateUpdateEventRequest createUpdateEventRequest;
+    private CreateEventRequest createEventRequest;
     private UserDetails adminUser;
 
     @BeforeEach
@@ -74,7 +75,7 @@ public class EventControllerTests {
                 AVAILABLE_TICKETS
         );
 
-        createUpdateEventRequest = new CreateUpdateEventRequest(
+        createEventRequest = new CreateEventRequest(
                 EVENT_NAME,
                 EVENT_PRICE,
                 OffsetDateTime.now().plusDays(1),
@@ -135,36 +136,36 @@ public class EventControllerTests {
     class CreateEventTests {
         @Test
         void shouldCreateEvent() throws Exception {
-            when(eventManagementService.createEvent(any(CreateUpdateEventRequest.class)))
+            when(eventManagementService.createEvent(any(CreateEventRequest.class)))
                     .thenReturn(eventResponse);
 
             mockMvc.perform(post("/api/events")
                             .with(csrf())
                             .with(user(adminUser))
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(createUpdateEventRequest)))
+                            .content(objectMapper.writeValueAsString(createEventRequest)))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.id").value(EVENT_ID))
                     .andExpect(jsonPath("$.name").value(EVENT_NAME));
 
             verify(eventManagementService)
-                    .createEvent(any(CreateUpdateEventRequest.class));
+                    .createEvent(any(CreateEventRequest.class));
         }
 
         @Test
         void shouldReturnConflictWhenEventAlreadyExists() throws Exception {
-            when(eventManagementService.createEvent(any(CreateUpdateEventRequest.class)))
-                    .thenThrow(new EventAlreadyRegisteredException(createUpdateEventRequest.name()));
+            when(eventManagementService.createEvent(any(CreateEventRequest.class)))
+                    .thenThrow(new EventAlreadyRegisteredException(createEventRequest.name()));
 
             mockMvc.perform(post("/api/events")
                             .with(csrf())
                             .with(user(adminUser))
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(createUpdateEventRequest)))
+                            .content(objectMapper.writeValueAsString(createEventRequest)))
                     .andExpect(status().isConflict());
 
             verify(eventManagementService)
-                    .createEvent(any(CreateUpdateEventRequest.class));
+                    .createEvent(any(CreateEventRequest.class));
         }
     }
 
@@ -172,36 +173,36 @@ public class EventControllerTests {
     class UpdateEventTests {
         @Test
         void shouldUpdateEvent() throws Exception {
-            when(eventManagementService.updateEvent(any(CreateUpdateEventRequest.class), eq(EVENT_ID)))
+            when(eventManagementService.updateEvent(any(UpdateEventRequest.class), eq(EVENT_ID)))
                     .thenReturn(eventResponse);
 
             mockMvc.perform(put("/api/events/{id}", EVENT_ID)
                             .with(csrf())
                             .with(user(adminUser))
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(createUpdateEventRequest)))
+                            .content(objectMapper.writeValueAsString(createEventRequest)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(EVENT_ID))
                     .andExpect(jsonPath("$.name").value(EVENT_NAME));
 
             verify(eventManagementService)
-                    .updateEvent(any(CreateUpdateEventRequest.class), eq(EVENT_ID));
+                    .updateEvent(any(UpdateEventRequest.class), eq(EVENT_ID));
         }
 
         @Test
         void shouldReturnNotFoundWhenEventDoesNotExist() throws Exception {
-            when(eventManagementService.updateEvent(any(CreateUpdateEventRequest.class), eq(EVENT_ID)))
+            when(eventManagementService.updateEvent(any(UpdateEventRequest.class), eq(EVENT_ID)))
                     .thenThrow(new EventNotFoundException(EVENT_ID));
 
             mockMvc.perform(put("/api/events/{id}", EVENT_ID)
                             .with(csrf())
                             .with(user(adminUser))
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(createUpdateEventRequest)))
+                            .content(objectMapper.writeValueAsString(createEventRequest)))
                     .andExpect(status().isNotFound());
 
             verify(eventManagementService)
-                    .updateEvent(any(CreateUpdateEventRequest.class), eq(EVENT_ID));
+                    .updateEvent(any(UpdateEventRequest.class), eq(EVENT_ID));
         }
     }
 

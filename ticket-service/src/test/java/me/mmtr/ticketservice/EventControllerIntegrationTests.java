@@ -2,8 +2,9 @@ package me.mmtr.ticketservice;
 
 import me.mmtr.ticketservice.model.EventStatus;
 import me.mmtr.ticketservice.model.dto.event.ChangeEventStatusRequest;
-import me.mmtr.ticketservice.model.dto.event.CreateUpdateEventRequest;
+import me.mmtr.ticketservice.model.dto.event.CreateEventRequest;
 import me.mmtr.ticketservice.model.dto.event.EventResponse;
+import me.mmtr.ticketservice.model.dto.event.UpdateEventRequest;
 import me.mmtr.ticketservice.repository.EventRepository;
 import me.mmtr.ticketservice.service.EventManagementService;
 import me.mmtr.ticketservice.service.EventQueryService;
@@ -38,12 +39,12 @@ public class EventControllerIntegrationTests extends TicketServiceModuleIntegrat
     }
 
     private EventResponse createEvent(String eventName) {
-        return eventManagementService.createEvent(new CreateUpdateEventRequest(
+        return eventManagementService.createEvent(new CreateEventRequest(
                 eventName,
                 BigDecimal.valueOf(10),
                 OffsetDateTime.now().plusDays(1),
                 OffsetDateTime.now().plusDays(2),
-                400
+                400L
         ));
     }
 
@@ -113,13 +114,13 @@ public class EventControllerIntegrationTests extends TicketServiceModuleIntegrat
 
     @Nested
     class CreateEventTests {
-        private static final CreateUpdateEventRequest REQUEST =
-                new CreateUpdateEventRequest(
+        private static final CreateEventRequest REQUEST =
+                new CreateEventRequest(
                         "Event",
                         BigDecimal.valueOf(10),
                         OffsetDateTime.now().plusDays(1),
                         OffsetDateTime.now().plusDays(2),
-                        400
+                        400L
                 );
 
         @Test
@@ -161,12 +162,12 @@ public class EventControllerIntegrationTests extends TicketServiceModuleIntegrat
 
     @Nested
     class UpdateEventTests {
-        private static final CreateUpdateEventRequest REQUEST = new CreateUpdateEventRequest(
+        private static final UpdateEventRequest REQUEST = new UpdateEventRequest(
                 "New Event",
                 BigDecimal.valueOf(10),
                 OffsetDateTime.now().plusDays(1),
                 OffsetDateTime.now().plusDays(2),
-                400
+                null
         );
 
         @Test
@@ -188,7 +189,7 @@ public class EventControllerIntegrationTests extends TicketServiceModuleIntegrat
             assertTrue(REQUEST.startDate().isEqual(updatedEvent.startDate()));
             assertTrue(REQUEST.endDate().isEqual(updatedEvent.endDate()));
             assertEquals(
-                    REQUEST.availableTickets(),
+                    eventResponse.availableTickets(),
                     updatedEvent.availableTickets()
             );
         }

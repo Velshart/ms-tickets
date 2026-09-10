@@ -30,7 +30,7 @@ public class Event {
     private OffsetDateTime endDate;
 
     @Column(nullable = false)
-    private long availableTickets;
+    private Long availableTickets;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -96,11 +96,11 @@ public class Event {
         this.endDate = endDate;
     }
 
-    public long getAvailableTickets() {
+    public Long getAvailableTickets() {
         return availableTickets;
     }
 
-    public void setAvailableTickets(long availableTickets) {
+    public void setAvailableTickets(Long availableTickets) {
         this.availableTickets = availableTickets;
     }
 

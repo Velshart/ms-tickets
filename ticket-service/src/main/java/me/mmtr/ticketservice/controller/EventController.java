@@ -2,8 +2,9 @@ package me.mmtr.ticketservice.controller;
 
 import jakarta.validation.Valid;
 import me.mmtr.ticketservice.model.dto.event.ChangeEventStatusRequest;
-import me.mmtr.ticketservice.model.dto.event.CreateUpdateEventRequest;
+import me.mmtr.ticketservice.model.dto.event.CreateEventRequest;
 import me.mmtr.ticketservice.model.dto.event.EventResponse;
+import me.mmtr.ticketservice.model.dto.event.UpdateEventRequest;
 import me.mmtr.ticketservice.service.EventManagementService;
 import me.mmtr.ticketservice.service.EventQueryService;
 import org.springframework.http.HttpStatus;
@@ -40,7 +41,7 @@ public class EventController {
     @PostMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<EventResponse> createEvent(
-            @Valid @RequestBody CreateUpdateEventRequest eventRequest
+            @Valid @RequestBody CreateEventRequest eventRequest
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(eventManagementService.createEvent(eventRequest));
@@ -49,7 +50,7 @@ public class EventController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<EventResponse> updateEvent(
-            @Valid @RequestBody CreateUpdateEventRequest eventRequest,
+            @Valid @RequestBody UpdateEventRequest eventRequest,
             @PathVariable Long id
     ) {
         return ResponseEntity.ok(
