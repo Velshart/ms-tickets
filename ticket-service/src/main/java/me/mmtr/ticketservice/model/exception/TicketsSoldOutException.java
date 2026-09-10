@@ -1,6 +1,8 @@
 package me.mmtr.ticketservice.model.exception;
 
-public class TicketsSoldOutException extends TicketException {
+import me.mmtr.common.web.ConflictException;
+
+public class TicketsSoldOutException extends ConflictException {
     public TicketsSoldOutException(Long eventId) {
         super("Tickets sold out for event " + eventId);
     }
