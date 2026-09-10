@@ -143,7 +143,7 @@ public class UserControllerTests {
     @Nested
     class DeleteUserTests {
         @Test
-        void shouldReturnNoContentAfterSuccesfulDeletion() throws Exception {
+        void shouldReturnNoContentAfterSuccessfulDeletion() throws Exception {
 
             mockMvc.perform(delete("/api/users/" + ID))
                     .andExpect(status().isNoContent());
