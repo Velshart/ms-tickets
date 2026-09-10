@@ -3,8 +3,9 @@ package me.mmtr.ticketservice.service;
 import me.mmtr.ticketservice.model.Event;
 import me.mmtr.ticketservice.model.EventStatus;
 import me.mmtr.ticketservice.model.dto.event.ChangeEventStatusRequest;
-import me.mmtr.ticketservice.model.dto.event.CreateUpdateEventRequest;
+import me.mmtr.ticketservice.model.dto.event.CreateEventRequest;
 import me.mmtr.ticketservice.model.dto.event.EventResponse;
+import me.mmtr.ticketservice.model.dto.event.UpdateEventRequest;
 import me.mmtr.ticketservice.model.dto.messaging.EventDeletedEvent;
 import me.mmtr.ticketservice.model.dto.messaging.EventStatusChangedEvent;
 import me.mmtr.ticketservice.model.dto.messaging.EventUpdatedEvent;
@@ -74,7 +75,7 @@ public class EventManagementServiceTests {
 
         @Test
         void shouldCreateEvent() {
-            CreateUpdateEventRequest request = new CreateUpdateEventRequest(
+            CreateEventRequest request = new CreateEventRequest(
                     NEW_NAME,
                     NEW_PRICE,
                     OffsetDateTime.now(),
@@ -99,12 +100,12 @@ public class EventManagementServiceTests {
 
         @Test
         void shouldUpdateEventAndPublishEventUpdatedEvent() {
-            CreateUpdateEventRequest request = new CreateUpdateEventRequest(
+            UpdateEventRequest request = new UpdateEventRequest(
                     NEW_NAME,
                     NEW_PRICE,
                     OffsetDateTime.now(),
                     OffsetDateTime.now().plusDays(1),
-                    NEW_TICKETS
+                    null
             );
 
             OrderResponse mockOrder1 = mock(OrderResponse.class);

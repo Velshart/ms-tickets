@@ -45,7 +45,7 @@ public class EventTests {
 
         @Test
         void shouldThrowTicketsSoldOutExceptionWhenNoTicketsLeft() {
-            event.setAvailableTickets(0);
+            event.setAvailableTickets(0L);
             assertThrows(
                     TicketsSoldOutException.class,
                     () -> event.reserveTickets(1)

@@ -12,6 +12,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,7 +25,7 @@ public class EventQueryServiceTests {
 
     private static final Long EVENT_ID = 1L;
     private static final String EVENT_NAME = "Test Festival";
-    private static final long INITIAL_TICKETS = 100L;
+    private static final Long INITIAL_TICKETS = 100L;
 
     @Mock
     private EventRepository eventRepository;
@@ -66,9 +68,13 @@ public class EventQueryServiceTests {
 
         @Test
         void shouldReturnAllEvents() {
-            Event event2 = new Event();
-            event2.setId(2L);
+            Event event2 = new Event("Second Event",
+                    BigDecimal.valueOf(10),
+                    OffsetDateTime.now().plusDays(1),
+                    OffsetDateTime.now().plusDays(2),
+                    500L);
             event2.setName("Second Event");
+
 
             when(eventRepository.findAll()).thenReturn(List.of(event, event2));
 

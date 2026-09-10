@@ -2,7 +2,7 @@ package me.mmtr.ticketservice;
 
 import me.mmtr.ticketservice.model.EventStatus;
 import me.mmtr.ticketservice.model.dto.event.ChangeEventStatusRequest;
-import me.mmtr.ticketservice.model.dto.event.CreateUpdateEventRequest;
+import me.mmtr.ticketservice.model.dto.event.CreateEventRequest;
 import me.mmtr.ticketservice.model.dto.event.EventResponse;
 import me.mmtr.ticketservice.model.dto.ticket.BuyTicketsRequest;
 import me.mmtr.ticketservice.model.dto.ticket.OrderResponse;
@@ -45,12 +45,12 @@ public class OrderControllerIntegrationTests extends TicketServiceModuleIntegrat
 
     private EventResponse createEventAndOpenTicketSales(String eventName) {
         EventResponse eventResponse =
-                eventManagementService.createEvent(new CreateUpdateEventRequest(
+                eventManagementService.createEvent(new CreateEventRequest(
                         eventName,
                         BigDecimal.valueOf(10),
                         OffsetDateTime.now().plusDays(1),
                         OffsetDateTime.now().plusDays(2),
-                        400
+                        400L
                 ));
 
         eventManagementService.changeEventStatus(

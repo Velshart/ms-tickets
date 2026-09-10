@@ -3,8 +3,9 @@ package me.mmtr.ticketservice.service;
 import jakarta.transaction.Transactional;
 import me.mmtr.ticketservice.model.Event;
 import me.mmtr.ticketservice.model.dto.event.ChangeEventStatusRequest;
-import me.mmtr.ticketservice.model.dto.event.CreateUpdateEventRequest;
+import me.mmtr.ticketservice.model.dto.event.CreateEventRequest;
 import me.mmtr.ticketservice.model.dto.event.EventResponse;
+import me.mmtr.ticketservice.model.dto.event.UpdateEventRequest;
 import me.mmtr.ticketservice.model.dto.messaging.EventDeletedEvent;
 import me.mmtr.ticketservice.model.dto.messaging.EventStatusChangedEvent;
 import me.mmtr.ticketservice.model.dto.messaging.EventUpdatedEvent;
@@ -37,7 +38,7 @@ public class EventManagementService {
         this.publisher = publisher;
     }
 
-    public EventResponse createEvent(CreateUpdateEventRequest eventRequest) {
+    public EventResponse createEvent(CreateEventRequest eventRequest) {
         if (!eventRepository.existsByName(eventRequest.name())) {
             Event event = new Event(
                     eventRequest.name(),
@@ -54,9 +55,15 @@ public class EventManagementService {
 
     @Transactional
     public EventResponse updateEvent(
-            CreateUpdateEventRequest eventRequest,
+            UpdateEventRequest eventRequest,
             Long id
     ) {
+        String updatedName = eventRequest.name();
+        BigDecimal updatedPrice = eventRequest.price();
+        OffsetDateTime updatedStartDate = eventRequest.startDate();
+        OffsetDateTime updatedEndDate = eventRequest.endDate();
+        Long updatedAvailableTickets = eventRequest.availableTickets();
+
         Event event = eventQueryService.getEventEntity(id);
 
         String oldName = event.getName();
@@ -65,11 +72,25 @@ public class EventManagementService {
         OffsetDateTime oldEndDate = event.getEndDate();
         long oldAvailableTickets = event.getAvailableTickets();
 
-        event.setName(eventRequest.name());
-        event.setPrice(eventRequest.price());
-        event.setStartDate(eventRequest.startDate());
-        event.setEndDate(eventRequest.endDate());
-        event.setAvailableTickets(eventRequest.availableTickets());
+        if (updatedName != null) {
+            event.setName(updatedName);
+        }
+
+        if (updatedPrice != null) {
+            event.setPrice(updatedPrice);
+        }
+
+        if (updatedStartDate != null) {
+            event.setStartDate(updatedStartDate);
+        }
+
+        if (updatedEndDate != null) {
+            event.setEndDate(updatedEndDate);
+        }
+
+        if (updatedAvailableTickets != null) {
+            event.setAvailableTickets(updatedAvailableTickets);
+        }
 
         Event savedEvent = eventRepository.save(event);
 
