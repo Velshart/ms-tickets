@@ -1,4 +1,4 @@
-package me.mmtr.e2eintegrationtests;
+package me.mmtr.servicesintegrationtests;
 
 import com.icegreen.greenmail.configuration.GreenMailConfiguration;
 import com.icegreen.greenmail.store.FolderException;
@@ -49,7 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class SystemE2EIntegrationTests {
+public class ServicesIntegrationTests {
     @ServiceConnection
     private static final PostgreSQLContainer postgres =
             new PostgreSQLContainer("postgres:16-alpine");
@@ -194,7 +194,7 @@ public class SystemE2EIntegrationTests {
         assertEquals(1, orderRepository.findAll().size());
 
         boolean emailArrived =
-                greenMail.waitForIncomingEmail(5000, 1);
+                greenMail.waitForIncomingEmail(5000, 2);
         assertTrue(emailArrived);
 
         MimeMessage[] receivedMessages = greenMail.getReceivedMessages();
@@ -361,7 +361,7 @@ public class SystemE2EIntegrationTests {
         assertEquals(
                 9,
                 eventRepository
-                        .findById(createdOrderId).orElseThrow().getAvailableTickets()
+                        .findById(createdEventId).orElseThrow().getAvailableTickets()
         );
 
         mockMvc.perform(delete("/api/orders/{id}", createdOrderId)
