@@ -1,18 +1,21 @@
 package me.mmtr.userservice;
 
-import me.mmtr.userservice.model.dto.request.AuthenticationRequest;
+import me.mmtr.userservice.model.Role;
+import me.mmtr.userservice.model.User;
 import me.mmtr.userservice.model.dto.request.RegisterRequest;
-import me.mmtr.userservice.model.dto.response.AuthenticationResponse;
+import me.mmtr.userservice.repository.UserRepository;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpHeaders;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MvcResult;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class UserSecurityIntegrationTest extends UserServiceModuleIntegrationTest {
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Test
     void shouldReturnForbiddenWhenRegularUserTriesToRegisterAdmin() throws Exception {
@@ -30,21 +33,7 @@ public class UserSecurityIntegrationTest extends UserServiceModuleIntegrationTes
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        AuthenticationRequest authenticationRequest = new AuthenticationRequest(
-                username,
-                password
-        );
-
-        MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(authenticationRequest)))
-                .andExpect(status().isOk())
-                .andReturn();
-
-        String userToken = objectMapper.readValue(
-                loginResult.getResponse().getContentAsByteArray(),
-                AuthenticationResponse.class
-        ).token();
+        User registeredUser = userRepository.findByUsername(username).orElseThrow();
 
         RegisterRequest registerAdminRequest = new RegisterRequest(
                 "admin",
@@ -54,10 +43,10 @@ public class UserSecurityIntegrationTest extends UserServiceModuleIntegrationTes
 
         mockMvc.perform(post("/api/users/register-admin")
                         .with(csrf())
-                        .header(
-                                HttpHeaders.AUTHORIZATION,
-                                "Bearer " + userToken
-                        )
+                        .header("X-User-Id", registeredUser.getId().toString())
+                        .header("X-User-Name", registeredUser.getUsername())
+                        .header("X-User-Email", registeredUser.getEmail())
+                        .header("X-User-Role", "ROLE_" + Role.USER.name())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(registerAdminRequest)))
                 .andExpect(status().isForbidden());

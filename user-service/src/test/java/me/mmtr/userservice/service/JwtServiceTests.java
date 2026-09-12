@@ -4,27 +4,41 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import me.mmtr.common.jwt.JwtParser;
 import me.mmtr.userservice.model.Role;
 import me.mmtr.userservice.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.crypto.SecretKey;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 public class JwtServiceTests {
     private static final long ONE_HOUR_IN_MILLIS = 3600000;
     private static final String TEST_SECRET =
             "NDA0RTYzNUY2QTU4NkU1QzY2MzM4RDQ5MzQ1NDMxMzMzMzc4MzMzMzM=";
     private User user;
+
+    @Mock
+    private JwtParser jwtParser;
+    private SecretKey secretKey;
+
     private JwtService jwtService;
 
     @BeforeEach
     public void setUp() {
-        jwtService = new JwtService(TEST_SECRET, ONE_HOUR_IN_MILLIS);
+        secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(TEST_SECRET));
+        when(jwtParser.getSigningKey()).thenReturn(secretKey);
+
+        jwtService = new JwtService(jwtParser, ONE_HOUR_IN_MILLIS);
 
         user = new User(
                 "testUser",
@@ -73,7 +87,6 @@ public class JwtServiceTests {
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
-
         }
     }
 }

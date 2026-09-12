@@ -1,6 +1,5 @@
 package me.mmtr.userservice.service;
 
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import me.mmtr.common.jwt.JwtParser;
 import me.mmtr.userservice.model.User;
@@ -17,11 +16,11 @@ public class JwtService {
     private final JwtParser jwtParser;
 
     public JwtService(
-            @Value("${jwt.secret}") String jwtSecret,
+            JwtParser jwtParser,
             @Value("${jwt.expiration}") long jwtExpiration
     ) {
+        this.jwtParser = jwtParser;
         this.jwtExpiration = jwtExpiration;
-        this.jwtParser = new JwtParser(jwtSecret);
     }
 
     public String generateToken(User user) {
@@ -40,9 +39,5 @@ public class JwtService {
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(jwtParser.getSigningKey())
                 .compact();
-    }
-
-    public Claims parseToken(String token) {
-        return jwtParser.parse(token);
     }
 }

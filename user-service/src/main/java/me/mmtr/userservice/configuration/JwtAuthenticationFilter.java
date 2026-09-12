@@ -1,12 +1,9 @@
 package me.mmtr.userservice.configuration;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import me.mmtr.userservice.service.JwtService;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,14 +15,10 @@ import java.io.IOException;
 
 @Component("usersServiceJwtAuthenticationFilter")
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private final JwtService jwtService;
+
     private final UserDetailsService userDetailsService;
 
-    public JwtAuthenticationFilter(
-            JwtService jwtService,
-            UserDetailsService userDetailsService
-    ) {
-        this.jwtService = jwtService;
+    public JwtAuthenticationFilter(UserDetailsService userDetailsService) {
         this.userDetailsService = userDetailsService;
     }
 
@@ -35,51 +28,38 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain
     ) throws ServletException, IOException {
-        String authorizationHeader = request.getHeader("Authorization");
 
-        if (
-                authorizationHeader == null ||
-                        !authorizationHeader.startsWith("Bearer ")
-        ) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+        String userId = request.getHeader("X-User-Id");
+        String username = request.getHeader("X-User-Name");
+        String email = request.getHeader("X-User-Email");
+        String userRole = request.getHeader("X-User-Role");
 
-        String jwt = getJwtTokenFromAuthorizationHeader(authorizationHeader);
+        if (areHeadersValid(userId, username, email, userRole) &&
+                SecurityContextHolder.getContext().getAuthentication() == null) {
 
-        try {
-            Claims claims = jwtService.parseToken(jwt);
-            String username = claims.get("username", String.class);
-            if (
-                    username != null &&
-                            SecurityContextHolder
-                                    .getContext()
-                                    .getAuthentication() == null
-            ) {
-                UserDetails userDetails =
-                        userDetailsService.loadUserByUsername(username);
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-                if (username.equals(userDetails.getUsername())) {
-                    UsernamePasswordAuthenticationToken authenticationToken =
-                            new UsernamePasswordAuthenticationToken(
-                                    userDetails,
-                                    null,
-                                    userDetails.getAuthorities()
-                            );
+            UsernamePasswordAuthenticationToken authenticationToken =
+                    new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
 
-                    SecurityContextHolder
-                            .getContext()
-                            .setAuthentication(authenticationToken);
-                }
-            }
-        } catch (JwtException | IllegalArgumentException _) {
+            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
         }
 
         filterChain.doFilter(request, response);
     }
 
-    private String getJwtTokenFromAuthorizationHeader(String authorizationHeader) {
-        final int jwtTokenBeginIndex = 7;
-        return authorizationHeader.substring(jwtTokenBeginIndex);
+    private boolean areHeadersValid(String userId, String username, String email, String role) {
+        return isHeaderValid(userId) &&
+                isHeaderValid(username) &&
+                isHeaderValid(email) &&
+                isHeaderValid(role);
+    }
+
+    private boolean isHeaderValid(String header) {
+        return header != null && !header.isBlank();
     }
 }

@@ -1,15 +1,15 @@
 package me.mmtr.ticketservice.controller;
 
-import me.mmtr.common.jwt.JwtParser;
-import me.mmtr.ticketservice.model.dto.event.UpdateEventRequest;
-import me.mmtr.ticketservice.service.EventManagementService;
-import me.mmtr.ticketservice.service.EventQueryService;
 import me.mmtr.ticketservice.model.EventStatus;
+import me.mmtr.ticketservice.model.authentication.AuthenticatedUser;
 import me.mmtr.ticketservice.model.dto.event.ChangeEventStatusRequest;
 import me.mmtr.ticketservice.model.dto.event.CreateEventRequest;
 import me.mmtr.ticketservice.model.dto.event.EventResponse;
+import me.mmtr.ticketservice.model.dto.event.UpdateEventRequest;
 import me.mmtr.ticketservice.model.exception.EventAlreadyRegisteredException;
 import me.mmtr.ticketservice.model.exception.EventNotFoundException;
+import me.mmtr.ticketservice.service.EventManagementService;
+import me.mmtr.ticketservice.service.EventQueryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -41,25 +40,22 @@ public class EventControllerTests {
     private static final String EVENT_NAME = "Event";
     private static final BigDecimal EVENT_PRICE = BigDecimal.valueOf(100.0);
     private static final long AVAILABLE_TICKETS = 250L;
-
     @MockitoBean
     private EventQueryService eventQueryService;
     @MockitoBean
     private EventManagementService eventManagementService;
-    @MockitoBean
-    private JwtParser parser;
     @Autowired
     private ObjectMapper objectMapper;
     @Autowired
     private MockMvc mockMvc;
-
     private EventResponse eventResponse;
     private CreateEventRequest createEventRequest;
     private UserDetails adminUser;
 
     @BeforeEach
     void setUp() {
-        adminUser = new User(
+        adminUser = new AuthenticatedUser(
+                1L,
                 "admin",
                 "password",
                 List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
@@ -105,11 +101,9 @@ public class EventControllerTests {
         void shouldReturnNotFoundWhenEventDoesNotExist() throws Exception {
             when(eventQueryService.getEvent(EVENT_ID))
                     .thenThrow(new EventNotFoundException(EVENT_ID));
-
             mockMvc.perform(get("/api/events/{id}", EVENT_ID)
                             .with(user(adminUser)))
                     .andExpect(status().isNotFound());
-
             verify(eventQueryService).getEvent(EVENT_ID);
         }
     }
@@ -120,14 +114,12 @@ public class EventControllerTests {
         void shouldReturnAllEvents() throws Exception {
             when(eventQueryService.getAllEvents())
                     .thenReturn(List.of(eventResponse));
-
             mockMvc.perform(get("/api/events")
                             .with(user(adminUser)))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.length()").value(1))
                     .andExpect(jsonPath("$[0].id").value(EVENT_ID));
-
             verify(eventQueryService).getAllEvents();
         }
     }
@@ -138,7 +130,6 @@ public class EventControllerTests {
         void shouldCreateEvent() throws Exception {
             when(eventManagementService.createEvent(any(CreateEventRequest.class)))
                     .thenReturn(eventResponse);
-
             mockMvc.perform(post("/api/events")
                             .with(csrf())
                             .with(user(adminUser))
@@ -184,7 +175,6 @@ public class EventControllerTests {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(EVENT_ID))
                     .andExpect(jsonPath("$.name").value(EVENT_NAME));
-
             verify(eventManagementService)
                     .updateEvent(any(UpdateEventRequest.class), eq(EVENT_ID));
         }
@@ -223,7 +213,6 @@ public class EventControllerTests {
                             .content(objectMapper.writeValueAsString(statusRequest)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(EVENT_ID));
-
             verify(eventManagementService)
                     .changeEventStatus(any(ChangeEventStatusRequest.class), eq(EVENT_ID));
         }
@@ -232,7 +221,6 @@ public class EventControllerTests {
         void shouldReturnNotFoundWhenEventDoesNotExist() throws Exception {
             ChangeEventStatusRequest statusRequest =
                     new ChangeEventStatusRequest(EventStatus.CANCELLED);
-
             when(eventManagementService.changeEventStatus(any(ChangeEventStatusRequest.class), eq(EVENT_ID)))
                     .thenThrow(new EventNotFoundException(EVENT_ID));
 
@@ -256,7 +244,6 @@ public class EventControllerTests {
                             .with(csrf())
                             .with(user(adminUser)))
                     .andExpect(status().isNoContent());
-
             verify(eventManagementService).deleteEventAndOrders(EVENT_ID);
         }
 
@@ -264,7 +251,6 @@ public class EventControllerTests {
         void shouldReturnNotFoundWhenEventDoesNotExist() throws Exception {
             doThrow(new EventNotFoundException(EVENT_ID))
                     .when(eventManagementService).deleteEventAndOrders(EVENT_ID);
-
             mockMvc.perform(delete("/api/events/{id}", EVENT_ID)
                             .with(csrf())
                             .with(user(adminUser)))

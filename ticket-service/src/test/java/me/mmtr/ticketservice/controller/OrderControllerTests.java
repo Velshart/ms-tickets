@@ -1,13 +1,12 @@
 package me.mmtr.ticketservice.controller;
 
-import me.mmtr.common.jwt.JwtParser;
-import me.mmtr.ticketservice.service.OrderService;
 import me.mmtr.ticketservice.model.authentication.AuthenticatedUser;
 import me.mmtr.ticketservice.model.dto.ticket.BuyTicketsRequest;
 import me.mmtr.ticketservice.model.dto.ticket.OrderResponse;
 import me.mmtr.ticketservice.model.dto.ticket.TicketResponse;
 import me.mmtr.ticketservice.model.exception.OrderNotFoundException;
 import me.mmtr.ticketservice.model.exception.TicketsSoldOutException;
+import me.mmtr.ticketservice.service.OrderService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -40,8 +39,6 @@ public class OrderControllerTests {
 
     @MockitoBean
     private OrderService orderService;
-    @MockitoBean
-    private JwtParser parser;
 
     @Autowired
     private ObjectMapper objectMapper;
