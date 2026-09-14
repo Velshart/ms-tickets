@@ -51,7 +51,7 @@ public class MailService {
     }
 
     public void sendOrderCreatedMail(String email, OrderCreatedMessage message) {
-        String subject = "Order Confirmation #" + message.id() + " - ms-tickets";
+        String subject = "Order Confirmation #" + message.orderId() + " - ms-tickets";
         String content = """
                 <h2>Order Confirmation</h2>
                 <p>Thank you for your order!</p>
@@ -60,7 +60,7 @@ public class MailService {
                 <p><strong>Tickets:</strong> %d</p>
                 <br>
                 <p>Best regards,<br>ms-tickets</p>
-                """.formatted(message.id(), message.eventName(), message.ticketQuantity());
+                """.formatted(message.orderId(), message.eventName(), message.ticketQuantity());
 
         sendEmail(email, subject, content);
     }

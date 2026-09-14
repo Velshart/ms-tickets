@@ -1,11 +1,12 @@
 package me.mmtr.ticketservice;
 
 import me.mmtr.ticketservice.model.EventStatus;
+import me.mmtr.ticketservice.model.OrderStatus;
 import me.mmtr.ticketservice.model.dto.event.ChangeEventStatusRequest;
 import me.mmtr.ticketservice.model.dto.event.CreateEventRequest;
 import me.mmtr.ticketservice.model.dto.event.EventResponse;
 import me.mmtr.ticketservice.model.dto.ticket.BuyTicketsRequest;
-import me.mmtr.ticketservice.model.dto.ticket.OrderResponse;
+import me.mmtr.ticketservice.model.dto.order.OrderResponse;
 import me.mmtr.ticketservice.repository.OrderRepository;
 import me.mmtr.ticketservice.service.EventManagementService;
 import me.mmtr.ticketservice.service.OrderService;
@@ -146,21 +147,24 @@ public class OrderControllerIntegrationTests extends TicketServiceModuleIntegrat
     }
 
     @Nested
-    class CreateOrderTests {
+    class SubmitOrderTests {
         private static final Long USER_ID = 100L;
         private static final String USER_ROLE = "ROLE_USER";
 
         @Test
-        void shouldCreateOrderAndReturn201Created() throws Exception {
+        void shouldSubmitOrderAndReturn202Accepted() throws Exception {
             EventResponse event = createEventAndOpenTicketSales("Event");
-            BuyTicketsRequest request = new BuyTicketsRequest(event.id(), 3);
+            BuyTicketsRequest request = new BuyTicketsRequest(
+                    event.id(),
+                    3
+            );
 
             MvcResult mvcResult = mockMvc.perform(post("/api/orders")
                             .with(csrf())
                             .with(withUser(USER_ID, USER_ROLE))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isCreated())
+                    .andExpect(status().isAccepted())
                     .andReturn();
 
             OrderResponse response = objectMapper.readValue(
@@ -171,6 +175,7 @@ public class OrderControllerIntegrationTests extends TicketServiceModuleIntegrat
             OrderResponse fetchedOrder = orderService.getOrder(response.id(), USER_ID);
             assertEquals(response.id(), fetchedOrder.id());
             assertEquals(event.id(), fetchedOrder.eventId());
+            assertEquals(OrderStatus.PENDING, fetchedOrder.orderStatus());
 
             List<OrderResponse> userOrders = orderService.getAllOrdersByUserId(USER_ID);
             assertEquals(1, userOrders.size());

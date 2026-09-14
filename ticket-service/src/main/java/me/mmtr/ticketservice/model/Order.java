@@ -22,6 +22,9 @@ public class Order {
     @ManyToOne(fetch = FetchType.LAZY)
     private Event event;
 
+    @Enumerated(EnumType.STRING)
+    private OrderStatus orderStatus = OrderStatus.PENDING;
+
     @OneToMany(
             mappedBy = "order",
             cascade = CascadeType.ALL,
@@ -63,6 +66,14 @@ public class Order {
 
     public void setEvent(Event event) {
         this.event = event;
+    }
+
+    public OrderStatus getOrderStatus() {
+        return orderStatus;
+    }
+
+    public void setOrderStatus(OrderStatus orderStatus) {
+        this.orderStatus = orderStatus;
     }
 
     public List<Ticket> getTickets() {

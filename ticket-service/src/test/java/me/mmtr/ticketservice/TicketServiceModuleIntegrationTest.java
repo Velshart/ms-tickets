@@ -11,6 +11,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import tools.jackson.databind.ObjectMapper;
 
@@ -25,6 +26,12 @@ public abstract class TicketServiceModuleIntegrationTest {
     @ServiceConnection
     protected static final PostgreSQLContainer postgres =
             new PostgreSQLContainer("postgres:16-alpine");
+
+    @ServiceConnection
+    @SuppressWarnings("resource")
+    protected static final GenericContainer<?> redis =
+            new GenericContainer<>("redis:7-alpine")
+                    .withExposedPorts(6379);
     @Autowired
     protected ObjectMapper objectMapper;
     @Autowired

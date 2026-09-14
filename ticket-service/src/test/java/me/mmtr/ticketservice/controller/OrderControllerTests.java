@@ -1,11 +1,11 @@
 package me.mmtr.ticketservice.controller;
 
+import me.mmtr.ticketservice.model.OrderStatus;
 import me.mmtr.ticketservice.model.authentication.AuthenticatedUser;
+import me.mmtr.ticketservice.model.dto.order.OrderResponse;
+import me.mmtr.ticketservice.model.dto.order.OrderStatusResponse;
 import me.mmtr.ticketservice.model.dto.ticket.BuyTicketsRequest;
-import me.mmtr.ticketservice.model.dto.ticket.OrderResponse;
-import me.mmtr.ticketservice.model.dto.ticket.TicketResponse;
 import me.mmtr.ticketservice.model.exception.OrderNotFoundException;
-import me.mmtr.ticketservice.model.exception.TicketsSoldOutException;
 import me.mmtr.ticketservice.service.OrderService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -19,10 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
-import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -62,7 +59,8 @@ public class OrderControllerTests {
                 ORDER_ID,
                 USER_ID,
                 EVENT_ID,
-                List.of(new TicketResponse(UUID.randomUUID()))
+                OrderStatus.PENDING,
+                List.of()
         );
 
         buyTicketsRequest = new BuyTicketsRequest(
@@ -94,10 +92,9 @@ public class OrderControllerTests {
 
     @Nested
     class CreateOrderTests {
-
         @Test
-        void shouldCreateOrder() throws Exception {
-            when(orderService.createOrder(any(BuyTicketsRequest.class), eq(USER_ID)))
+        void shouldSubmitOrderAndReturnAccepted() throws Exception {
+            when(orderService.submitOrder(buyTicketsRequest, USER_ID))
                     .thenReturn(orderResponse);
 
             mockMvc.perform(post("/api/orders")
@@ -105,28 +102,44 @@ public class OrderControllerTests {
                             .with(user(user))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(buyTicketsRequest)))
-                    .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.id").value(ORDER_ID));
+                    .andExpect(status().isAccepted())
+                    .andExpect(jsonPath("$.id").value(ORDER_ID))
+                    .andExpect(jsonPath("$.userId").value(USER_ID))
+                    .andExpect(jsonPath("$.eventId").value(EVENT_ID))
+                    .andExpect(jsonPath("$.orderStatus")
+                            .value(OrderStatus.PENDING.toString()))
+                    .andExpect(jsonPath("$.tickets").isEmpty());
+        }
+    }
 
-            verify(orderService).createOrder(any(BuyTicketsRequest.class), eq(USER_ID));
+    @Nested
+    class GetOrderStatusTests {
+        @Test
+        void shouldReturnOrderStatusWithOk() throws Exception {
+            OrderStatusResponse statusResponse =
+                    new OrderStatusResponse(ORDER_ID, OrderStatus.PENDING);
+
+            when(orderService.getOrderStatus(ORDER_ID, USER_ID))
+                    .thenReturn(statusResponse);
+
+            mockMvc.perform(get("/api/orders/" + ORDER_ID + "/status")
+                            .with(user(user)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.orderId")
+                            .value(ORDER_ID))
+                    .andExpect(jsonPath("$.orderStatus")
+                            .value(OrderStatus.PENDING.toString()));
         }
 
         @Test
-        void shouldReturnConflictWhenTicketsSoldOut() throws Exception {
-            when(orderService.createOrder(any(BuyTicketsRequest.class), eq(USER_ID)))
-                    .thenThrow(new TicketsSoldOutException(EVENT_ID));
+        void shouldReturnNotFoundWhenOrderDoesNotExist() throws Exception {
+            doThrow(OrderNotFoundException.class)
+                    .when(orderService)
+                    .getOrderStatus(ORDER_ID, USER_ID);
 
-            mockMvc.perform(post("/api/orders")
-                            .with(csrf())
-                            .with(user(user))
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(buyTicketsRequest)))
-                    .andExpect(status().isConflict());
-
-            verify(orderService).createOrder(
-                    any(BuyTicketsRequest.class),
-                    eq(USER_ID)
-            );
+            mockMvc.perform(get("/api/orders/" + ORDER_ID + "/status")
+                            .with(user(user)))
+                    .andExpect(status().isNotFound());
         }
     }
 
@@ -190,7 +203,8 @@ public class OrderControllerTests {
 
         @Test
         void shouldReturnOrderById() throws Exception {
-            when(orderService.getOrder(ORDER_ID, USER_ID)).thenReturn(orderResponse);
+            when(orderService.getOrder(ORDER_ID, USER_ID))
+                    .thenReturn(orderResponse);
 
             mockMvc.perform(get("/api/orders/{orderId}", ORDER_ID)
                             .with(user(user)))
