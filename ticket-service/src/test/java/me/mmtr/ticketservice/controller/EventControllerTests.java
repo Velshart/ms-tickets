@@ -1,6 +1,7 @@
 package me.mmtr.ticketservice.controller;
 
 import me.mmtr.ticketservice.assembler.EventModelAssembler;
+import me.mmtr.ticketservice.configuration.filter.RateLimitingFilter;
 import me.mmtr.ticketservice.model.EventStatus;
 import me.mmtr.ticketservice.model.authentication.AuthenticatedUser;
 import me.mmtr.ticketservice.model.dto.event.ChangeEventStatusRequest;
@@ -16,6 +17,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -40,7 +43,11 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(EventController.class)
+@WebMvcTest(controllers = EventController.class,
+        excludeFilters = @ComponentScan.Filter(
+                type = FilterType.ASSIGNABLE_TYPE,
+                classes = RateLimitingFilter.class
+        ))
 @Import(EventModelAssembler.class)
 public class EventControllerTests {
     private static final Long EVENT_ID = 1L;

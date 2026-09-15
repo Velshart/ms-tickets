@@ -4,6 +4,7 @@ import me.mmtr.userservice.model.Role;
 import me.mmtr.userservice.model.User;
 import me.mmtr.userservice.model.dto.request.RegisterRequest;
 import me.mmtr.userservice.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -13,9 +14,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class UserSecurityIntegrationTest extends UserServiceModuleIntegrationTest {
-
     @Autowired
     private UserRepository userRepository;
+
+    @BeforeEach
+    public void beforeEach() {
+        rateLimitingFilter.reset();
+    }
 
     @Test
     void shouldReturnForbiddenWhenRegularUserTriesToRegisterAdmin() throws Exception {

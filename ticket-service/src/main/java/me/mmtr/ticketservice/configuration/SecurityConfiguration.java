@@ -1,6 +1,8 @@
 package me.mmtr.ticketservice.configuration;
 
 import jakarta.servlet.http.HttpServletResponse;
+import me.mmtr.ticketservice.configuration.filter.JwtAuthenticationFilter;
+import me.mmtr.ticketservice.configuration.filter.RateLimitingFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -16,12 +18,14 @@ import org.springframework.web.filter.ForwardedHeaderFilter;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfiguration {
-
+    private final RateLimitingFilter rateLimitingFilter;
     private final JwtAuthenticationFilter authenticationFilter;
 
     public SecurityConfiguration(
+            RateLimitingFilter rateLimitingFilter,
             JwtAuthenticationFilter authenticationFilter
     ) {
+        this.rateLimitingFilter = rateLimitingFilter;
         this.authenticationFilter = authenticationFilter;
     }
 
@@ -46,6 +50,10 @@ public class SecurityConfiguration {
                                 session
                                         .sessionCreationPolicy(
                                                 SessionCreationPolicy.STATELESS))
+                .addFilterBefore(
+                        rateLimitingFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                )
                 .addFilterBefore(
                         ticketServiceForwardedHeaderFilter(),
                         UsernamePasswordAuthenticationFilter.class

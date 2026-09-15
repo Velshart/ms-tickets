@@ -1,6 +1,7 @@
 package me.mmtr.ticketservice;
 
 import jakarta.transaction.Transactional;
+import me.mmtr.ticketservice.configuration.filter.RateLimitingFilter;
 import me.mmtr.ticketservice.model.authentication.AuthenticatedUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -32,6 +33,8 @@ public abstract class TicketServiceModuleIntegrationTest {
     protected static final GenericContainer<?> redis =
             new GenericContainer<>("redis:7-alpine")
                     .withExposedPorts(6379);
+    @Autowired
+    protected RateLimitingFilter rateLimitingFilter;
     @Autowired
     protected ObjectMapper objectMapper;
     @Autowired

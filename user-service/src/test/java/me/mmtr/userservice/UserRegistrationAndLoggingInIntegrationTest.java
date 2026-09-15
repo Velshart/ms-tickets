@@ -2,6 +2,7 @@ package me.mmtr.userservice;
 
 import me.mmtr.userservice.model.dto.request.AuthenticationRequest;
 import me.mmtr.userservice.model.dto.request.RegisterRequest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
@@ -9,6 +10,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class UserRegistrationAndLoggingInIntegrationTest extends UserServiceModuleIntegrationTest {
+
+    @BeforeEach
+    public void setUp() {
+        rateLimitingFilter.reset();
+    }
 
     @Test
     void shouldCorrectlyRegisterNewAccountAndAuthenticate() throws Exception {

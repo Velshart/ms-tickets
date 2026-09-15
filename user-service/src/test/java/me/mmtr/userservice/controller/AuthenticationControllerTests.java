@@ -1,5 +1,6 @@
 package me.mmtr.userservice.controller;
 
+import me.mmtr.userservice.configuration.filter.RateLimitingFilter;
 import me.mmtr.userservice.model.Role;
 import me.mmtr.userservice.model.dto.request.AuthenticationRequest;
 import me.mmtr.userservice.model.dto.request.RegisterRequest;
@@ -11,6 +12,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -24,7 +27,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(AuthenticationController.class)
+@WebMvcTest(controllers = AuthenticationController.class,
+        excludeFilters = @ComponentScan.Filter(
+                type = FilterType.ASSIGNABLE_TYPE,
+                classes = RateLimitingFilter.class
+        ))
 public class AuthenticationControllerTests {
     private static final String USERNAME = "test_user";
     private static final String EMAIL = "test@example.com";

@@ -90,6 +90,10 @@ public class ServicesIntegrationTests {
     private UserRepository userRepository;
     @Autowired
     private UserIdEmailRepository userIdEmailRepository;
+    @Autowired
+    private me.mmtr.ticketservice.configuration.filter.RateLimitingFilter tsRateLimitingFilter;
+    @Autowired
+    private me.mmtr.userservice.configuration.filter.RateLimitingFilter usRateLimitingFilter;
     private AuthenticatedUser adminUser;
 
     @DynamicPropertySource
@@ -116,6 +120,8 @@ public class ServicesIntegrationTests {
 
     @BeforeEach
     void setUp() throws FolderException {
+        tsRateLimitingFilter.reset();
+        usRateLimitingFilter.reset();
         orderRepository.deleteAll();
         eventRepository.deleteAll();
         userIdEmailRepository.deleteAll();

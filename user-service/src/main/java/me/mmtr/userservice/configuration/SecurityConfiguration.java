@@ -1,6 +1,8 @@
 package me.mmtr.userservice.configuration;
 
 import jakarta.servlet.http.HttpServletResponse;
+import me.mmtr.userservice.configuration.filter.JwtAuthenticationFilter;
+import me.mmtr.userservice.configuration.filter.RateLimitingFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,17 +27,20 @@ import org.springframework.web.filter.ForwardedHeaderFilter;
 public class SecurityConfiguration {
     private final UserDetailsService userDetailsService;
     private final JwtAuthenticationFilter authenticationFilter;
+    private final RateLimitingFilter rateLimitingFilter;
 
     public SecurityConfiguration(
             UserDetailsService userDetailsService,
-            JwtAuthenticationFilter authenticationFilter
+            JwtAuthenticationFilter authenticationFilter,
+            RateLimitingFilter rateLimitingFilter
     ) {
         this.userDetailsService = userDetailsService;
         this.authenticationFilter = authenticationFilter;
+        this.rateLimitingFilter = rateLimitingFilter;
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .securityMatcher("/api/auth/**", "/api/users/**")
@@ -55,6 +60,10 @@ public class SecurityConfiguration {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
+                .addFilterBefore(
+                        rateLimitingFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                )
                 .addFilterBefore(
                         userServiceForwardedHeaderFilter(),
                         UsernamePasswordAuthenticationFilter.class
@@ -79,7 +88,7 @@ public class SecurityConfiguration {
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration config
-    ) throws Exception {
+    ) {
         return config.getAuthenticationManager();
     }
 

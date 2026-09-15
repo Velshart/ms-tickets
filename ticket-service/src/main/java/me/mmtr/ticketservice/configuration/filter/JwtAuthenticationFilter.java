@@ -1,4 +1,4 @@
-package me.mmtr.ticketservice.configuration;
+package me.mmtr.ticketservice.configuration.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -18,7 +18,7 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
-    protected void doFilterInternal(
+    public void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain

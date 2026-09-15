@@ -1,6 +1,7 @@
 package me.mmtr.userservice.controller;
 
 import me.mmtr.userservice.assembler.UserModelAssembler;
+import me.mmtr.userservice.configuration.filter.RateLimitingFilter;
 import me.mmtr.userservice.model.Role;
 import me.mmtr.userservice.model.User;
 import me.mmtr.userservice.model.dto.request.RegisterRequest;
@@ -15,6 +16,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -38,7 +41,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(UserController.class)
+@WebMvcTest(controllers = UserController.class,
+        excludeFilters = @ComponentScan.Filter(
+                type = FilterType.ASSIGNABLE_TYPE,
+                classes = RateLimitingFilter.class
+        ))
 @Import(UserModelAssembler.class)
 public class UserControllerTests {
 

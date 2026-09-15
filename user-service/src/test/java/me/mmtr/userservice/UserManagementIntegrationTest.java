@@ -4,6 +4,7 @@ import me.mmtr.userservice.model.Role;
 import me.mmtr.userservice.model.User;
 import me.mmtr.userservice.model.dto.request.RegisterRequest;
 import me.mmtr.userservice.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +20,11 @@ public class UserManagementIntegrationTest extends UserServiceModuleIntegrationT
     protected UserRepository userRepository;
     @Value("${super.admin.username}")
     private String superAdminUsername;
+
+    @BeforeEach
+    public void setUp() {
+        rateLimitingFilter.reset();
+    }
 
     @Test
     void shouldDeleteUserAndRemoveItFromDatabase() throws Exception {

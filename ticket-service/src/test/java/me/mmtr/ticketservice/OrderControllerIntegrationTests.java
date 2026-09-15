@@ -41,6 +41,7 @@ public class OrderControllerIntegrationTests extends TicketServiceModuleIntegrat
 
     @BeforeEach
     public void setup() {
+        rateLimitingFilter.reset();
         orderRepository.deleteAll();
     }
 

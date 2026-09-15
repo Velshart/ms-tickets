@@ -14,5 +14,4 @@ public class TicketsApiApplication {
     static void main(String[] args) {
         SpringApplication.run(TicketsApiApplication.class, args);
     }
-    //TODO: optimistic lock exception handling
 }
