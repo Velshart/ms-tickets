@@ -1,6 +1,5 @@
 package me.mmtr.ticketservice.service;
 
-import jakarta.transaction.Transactional;
 import me.mmtr.ticketservice.model.Order;
 import me.mmtr.ticketservice.model.OrderStatus;
 import me.mmtr.ticketservice.model.Ticket;
@@ -11,6 +10,7 @@ import me.mmtr.ticketservice.model.exception.TicketsSoldOutException;
 import me.mmtr.ticketservice.repository.OrderRepository;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class OrderProcessingService {
