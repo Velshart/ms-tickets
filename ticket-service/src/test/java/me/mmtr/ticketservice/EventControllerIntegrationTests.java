@@ -34,6 +34,7 @@ public class EventControllerIntegrationTests extends TicketServiceModuleIntegrat
 
     @BeforeEach
     public void setup() {
+        rateLimitingFilter.reset();
         eventRepository.deleteAll();
     }
 

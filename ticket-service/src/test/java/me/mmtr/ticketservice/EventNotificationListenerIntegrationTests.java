@@ -33,6 +33,7 @@ public class EventNotificationListenerIntegrationTests extends TicketServiceModu
 
     @BeforeEach
     public void setUp() {
+        rateLimitingFilter.reset();
         Mockito.reset(rabbitTemplate);
         transactionTemplate.setPropagationBehavior(
                 TransactionDefinition.PROPAGATION_REQUIRES_NEW
