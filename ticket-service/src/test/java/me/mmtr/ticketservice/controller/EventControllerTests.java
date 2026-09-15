@@ -1,5 +1,6 @@
 package me.mmtr.ticketservice.controller;
 
+import me.mmtr.ticketservice.assembler.EventModelAssembler;
 import me.mmtr.ticketservice.model.EventStatus;
 import me.mmtr.ticketservice.model.authentication.AuthenticatedUser;
 import me.mmtr.ticketservice.model.dto.event.ChangeEventStatusRequest;
@@ -15,6 +16,11 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -35,19 +41,25 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(EventController.class)
+@Import(EventModelAssembler.class)
 public class EventControllerTests {
     private static final Long EVENT_ID = 1L;
     private static final String EVENT_NAME = "Event";
     private static final BigDecimal EVENT_PRICE = BigDecimal.valueOf(100.0);
     private static final long AVAILABLE_TICKETS = 250L;
+
     @MockitoBean
     private EventQueryService eventQueryService;
+
     @MockitoBean
     private EventManagementService eventManagementService;
+
     @Autowired
     private ObjectMapper objectMapper;
+
     @Autowired
     private MockMvc mockMvc;
+
     private EventResponse eventResponse;
     private CreateEventRequest createEventRequest;
     private UserDetails adminUser;
@@ -83,16 +95,20 @@ public class EventControllerTests {
     @Nested
     class GetEventByIdTests {
         @Test
-        void shouldReturnEventByIdWithOkStatus() throws Exception {
+        void shouldReturnEventByIdWithOkStatusAndHateoasLinks() throws Exception {
             when(eventQueryService.getEvent(EVENT_ID)).thenReturn(eventResponse);
+
             mockMvc.perform(get("/api/events/{id}", EVENT_ID)
                             .with(user(adminUser)))
                     .andExpect(status().isOk())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.id").value(EVENT_ID))
                     .andExpect(jsonPath("$.name").value(EVENT_NAME))
-                    .andExpect(jsonPath("$.availableTickets")
-                            .value(AVAILABLE_TICKETS));
+                    .andExpect(jsonPath("$.availableTickets").value(AVAILABLE_TICKETS))
+                    .andExpect(jsonPath("$._links.self.href").exists())
+                    .andExpect(jsonPath("$._links.events.href").exists())
+                    .andExpect(jsonPath("$._links.update.href").exists())
+                    .andExpect(jsonPath("$._links.update-status.href").exists())
+                    .andExpect(jsonPath("$._links.delete.href").exists());
 
             verify(eventQueryService).getEvent(EVENT_ID);
         }
@@ -101,9 +117,11 @@ public class EventControllerTests {
         void shouldReturnNotFoundWhenEventDoesNotExist() throws Exception {
             when(eventQueryService.getEvent(EVENT_ID))
                     .thenThrow(new EventNotFoundException(EVENT_ID));
+
             mockMvc.perform(get("/api/events/{id}", EVENT_ID)
                             .with(user(adminUser)))
                     .andExpect(status().isNotFound());
+
             verify(eventQueryService).getEvent(EVENT_ID);
         }
     }
@@ -111,36 +129,45 @@ public class EventControllerTests {
     @Nested
     class GetAllEventsTests {
         @Test
-        void shouldReturnAllEvents() throws Exception {
-            when(eventQueryService.getAllEvents())
-                    .thenReturn(List.of(eventResponse));
+        void shouldReturnPagedEventsWithHateoasLinks() throws Exception {
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<EventResponse> page = new PageImpl<>(List.of(eventResponse), pageable, 1);
+
+            when(eventQueryService.getAllEvents(any(Pageable.class))).thenReturn(page);
+
             mockMvc.perform(get("/api/events")
+                            .param("page", "0")
+                            .param("size", "10")
                             .with(user(adminUser)))
                     .andExpect(status().isOk())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$.length()").value(1))
-                    .andExpect(jsonPath("$[0].id").value(EVENT_ID));
-            verify(eventQueryService).getAllEvents();
+                    .andExpect(jsonPath("$._embedded.events[0].id").value(EVENT_ID))
+                    .andExpect(jsonPath("$._embedded.events[0]._links.self.href").exists())
+                    .andExpect(jsonPath("$._links.self.href").exists())
+                    .andExpect(jsonPath("$.page.totalElements").value(1));
+
+            verify(eventQueryService).getAllEvents(any(Pageable.class));
         }
     }
 
     @Nested
     class CreateEventTests {
         @Test
-        void shouldCreateEvent() throws Exception {
+        void shouldCreateEventAndReturnLocationHeader() throws Exception {
             when(eventManagementService.createEvent(any(CreateEventRequest.class)))
                     .thenReturn(eventResponse);
+
             mockMvc.perform(post("/api/events")
                             .with(csrf())
                             .with(user(adminUser))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(createEventRequest)))
                     .andExpect(status().isCreated())
+                    .andExpect(header().exists("Location"))
                     .andExpect(jsonPath("$.id").value(EVENT_ID))
-                    .andExpect(jsonPath("$.name").value(EVENT_NAME));
+                    .andExpect(jsonPath("$.name").value(EVENT_NAME))
+                    .andExpect(jsonPath("$._links.self.href").exists());
 
-            verify(eventManagementService)
-                    .createEvent(any(CreateEventRequest.class));
+            verify(eventManagementService).createEvent(any(CreateEventRequest.class));
         }
 
         @Test
@@ -155,8 +182,7 @@ public class EventControllerTests {
                             .content(objectMapper.writeValueAsString(createEventRequest)))
                     .andExpect(status().isConflict());
 
-            verify(eventManagementService)
-                    .createEvent(any(CreateEventRequest.class));
+            verify(eventManagementService).createEvent(any(CreateEventRequest.class));
         }
     }
 
@@ -174,9 +200,10 @@ public class EventControllerTests {
                             .content(objectMapper.writeValueAsString(createEventRequest)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(EVENT_ID))
-                    .andExpect(jsonPath("$.name").value(EVENT_NAME));
-            verify(eventManagementService)
-                    .updateEvent(any(UpdateEventRequest.class), eq(EVENT_ID));
+                    .andExpect(jsonPath("$.name").value(EVENT_NAME))
+                    .andExpect(jsonPath("$._links.self.href").exists());
+
+            verify(eventManagementService).updateEvent(any(UpdateEventRequest.class), eq(EVENT_ID));
         }
 
         @Test
@@ -191,8 +218,7 @@ public class EventControllerTests {
                             .content(objectMapper.writeValueAsString(createEventRequest)))
                     .andExpect(status().isNotFound());
 
-            verify(eventManagementService)
-                    .updateEvent(any(UpdateEventRequest.class), eq(EVENT_ID));
+            verify(eventManagementService).updateEvent(any(UpdateEventRequest.class), eq(EVENT_ID));
         }
     }
 
@@ -200,8 +226,7 @@ public class EventControllerTests {
     class ChangeEventStatusTests {
         @Test
         void shouldUpdateEventStatus() throws Exception {
-            ChangeEventStatusRequest statusRequest =
-                    new ChangeEventStatusRequest(EventStatus.CANCELLED);
+            ChangeEventStatusRequest statusRequest = new ChangeEventStatusRequest(EventStatus.CANCELLED);
 
             when(eventManagementService.changeEventStatus(any(ChangeEventStatusRequest.class), eq(EVENT_ID)))
                     .thenReturn(eventResponse);
@@ -212,15 +237,16 @@ public class EventControllerTests {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(statusRequest)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.id").value(EVENT_ID));
-            verify(eventManagementService)
-                    .changeEventStatus(any(ChangeEventStatusRequest.class), eq(EVENT_ID));
+                    .andExpect(jsonPath("$.id").value(EVENT_ID))
+                    .andExpect(jsonPath("$._links.self.href").exists());
+
+            verify(eventManagementService).changeEventStatus(any(ChangeEventStatusRequest.class), eq(EVENT_ID));
         }
 
         @Test
         void shouldReturnNotFoundWhenEventDoesNotExist() throws Exception {
-            ChangeEventStatusRequest statusRequest =
-                    new ChangeEventStatusRequest(EventStatus.CANCELLED);
+            ChangeEventStatusRequest statusRequest = new ChangeEventStatusRequest(EventStatus.CANCELLED);
+
             when(eventManagementService.changeEventStatus(any(ChangeEventStatusRequest.class), eq(EVENT_ID)))
                     .thenThrow(new EventNotFoundException(EVENT_ID));
 
@@ -231,8 +257,7 @@ public class EventControllerTests {
                             .content(objectMapper.writeValueAsString(statusRequest)))
                     .andExpect(status().isNotFound());
 
-            verify(eventManagementService)
-                    .changeEventStatus(any(ChangeEventStatusRequest.class), eq(EVENT_ID));
+            verify(eventManagementService).changeEventStatus(any(ChangeEventStatusRequest.class), eq(EVENT_ID));
         }
     }
 
@@ -244,6 +269,7 @@ public class EventControllerTests {
                             .with(csrf())
                             .with(user(adminUser)))
                     .andExpect(status().isNoContent());
+
             verify(eventManagementService).deleteEventAndOrders(EVENT_ID);
         }
 
@@ -251,6 +277,7 @@ public class EventControllerTests {
         void shouldReturnNotFoundWhenEventDoesNotExist() throws Exception {
             doThrow(new EventNotFoundException(EVENT_ID))
                     .when(eventManagementService).deleteEventAndOrders(EVENT_ID);
+
             mockMvc.perform(delete("/api/events/{id}", EVENT_ID)
                             .with(csrf())
                             .with(user(adminUser)))

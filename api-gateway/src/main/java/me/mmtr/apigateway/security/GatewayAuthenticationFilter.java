@@ -58,6 +58,7 @@ public class GatewayAuthenticationFilter implements GlobalFilter, Ordered {
         String userRole = claims.get("userRole", String.class);
 
         ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
+                .header("X-Forwarded-Host", request.getURI().getHost())
                 .header("X-User-Id", userId != null ? userId : "")
                 .header("X-User-Name", username != null ? username : "")
                 .header("X-User-Email", email != null ? email : "")

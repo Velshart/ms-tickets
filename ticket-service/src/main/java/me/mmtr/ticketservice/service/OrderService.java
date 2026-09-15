@@ -8,13 +8,15 @@ import me.mmtr.ticketservice.model.Ticket;
 import me.mmtr.ticketservice.model.dto.messaging.OrderCreatedEvent;
 import me.mmtr.ticketservice.model.dto.messaging.OrderDeletedEvent;
 import me.mmtr.ticketservice.model.dto.messaging.OrderSubmittedEvent;
-import me.mmtr.ticketservice.model.dto.ticket.BuyTicketsRequest;
 import me.mmtr.ticketservice.model.dto.order.OrderResponse;
 import me.mmtr.ticketservice.model.dto.order.OrderStatusResponse;
+import me.mmtr.ticketservice.model.dto.ticket.BuyTicketsRequest;
 import me.mmtr.ticketservice.model.exception.OrderNotFoundException;
 import me.mmtr.ticketservice.model.exception.TicketSalesClosedException;
 import me.mmtr.ticketservice.repository.OrderRepository;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -113,11 +115,12 @@ public class OrderService {
                 .toList();
     }
 
-    public List<OrderResponse> getAllOrdersByUserId(Long userId) {
-        return orderRepository.findAllByUserId(userId)
-                .stream()
-                .map(OrderResponse::from)
-                .toList();
+    public Page<OrderResponse> getAllOrdersByUserId(
+            Long userId,
+            Pageable pageable
+    ) {
+        return orderRepository.findAllByUserId(userId, pageable)
+                .map(OrderResponse::from);
     }
 
     @Transactional
@@ -159,10 +162,12 @@ public class OrderService {
     }
 
     private void deleteOrder(Order order) {
-        eventQueryService.returnTickets(
-                order.getEvent().getId(),
-                order.getTickets().size()
-        );
+        if (!order.getTickets().isEmpty()) {
+            eventQueryService.returnTickets(
+                    order.getEvent().getId(),
+                    order.getTickets().size()
+            );
+        }
 
         orderRepository.delete(order);
     }

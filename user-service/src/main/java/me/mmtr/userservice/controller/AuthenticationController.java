@@ -20,17 +20,6 @@ public class AuthenticationController {
         this.authenticationService = authenticationService;
     }
 
-//    @PostMapping("/register")
-//    public ResponseEntity<AuthenticationResponse> registerUser(
-//            @Valid @RequestBody RegisterRequest registerRequest
-//    ) {
-//        return ResponseEntity.status(HttpStatus.CREATED)
-//                .body(authenticationService.register(
-//                        registerRequest,
-//                        Role.USER
-//                ));
-//    }
-
     @PostMapping("/register")
     public ResponseEntity<UserResponse> registerUser(
             @Valid @RequestBody RegisterRequest registerRequest

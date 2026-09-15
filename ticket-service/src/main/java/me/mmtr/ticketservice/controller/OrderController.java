@@ -1,61 +1,74 @@
 package me.mmtr.ticketservice.controller;
 
 import jakarta.validation.Valid;
+import me.mmtr.ticketservice.assembler.OrderModelAssembler;
 import me.mmtr.ticketservice.model.authentication.AuthenticatedUser;
-import me.mmtr.ticketservice.model.dto.ticket.BuyTicketsRequest;
 import me.mmtr.ticketservice.model.dto.order.OrderResponse;
 import me.mmtr.ticketservice.model.dto.order.OrderStatusResponse;
+import me.mmtr.ticketservice.model.dto.ticket.BuyTicketsRequest;
 import me.mmtr.ticketservice.service.OrderService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
     private final OrderService orderService;
+    private final OrderModelAssembler orderModelAssembler;
 
-    public OrderController(OrderService orderService) {
+    public OrderController(
+            OrderService orderService,
+            OrderModelAssembler orderModelAssembler
+    ) {
         this.orderService = orderService;
+        this.orderModelAssembler = orderModelAssembler;
     }
 
     @GetMapping("/{orderId}")
-    public ResponseEntity<OrderResponse> getOrderById(
+    public ResponseEntity<EntityModel<OrderResponse>> getOrderById(
             @PathVariable Long orderId,
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
-        return ResponseEntity.ok(
-                orderService.getOrder(
-                        orderId,
-                        authenticatedUser.id()
-                ));
+        OrderResponse order = orderService.getOrder(orderId, authenticatedUser.id());
+        return ResponseEntity.ok(orderModelAssembler.toModel(order));
     }
 
     @GetMapping
-    public ResponseEntity<List<OrderResponse>> getAllOrdersForUser(
+    public ResponseEntity<CollectionModel<EntityModel<OrderResponse>>> getAllOrdersForUser(
+            Pageable pageable,
+            PagedResourcesAssembler<OrderResponse> pagedResourcesAssembler,
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
-        return ResponseEntity.ok(
-                orderService.getAllOrdersByUserId(
-                        authenticatedUser.id()
-                )
-        );
+        Page<OrderResponse> orderPage = orderService.getAllOrdersByUserId(authenticatedUser.id(), pageable);
+        PagedModel<EntityModel<OrderResponse>> pagedModel =
+                pagedResourcesAssembler.toModel(orderPage, orderModelAssembler);
+
+        return ResponseEntity.ok(pagedModel);
     }
 
     @PostMapping
-    public ResponseEntity<OrderResponse> submitOrder(
+    public ResponseEntity<EntityModel<OrderResponse>> submitOrder(
             @Valid @RequestBody BuyTicketsRequest buyTicketsRequest,
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
-        return ResponseEntity.accepted().body(
-                orderService.submitOrder(
-                        buyTicketsRequest,
-                        authenticatedUser.id()
-                )
+        OrderResponse submittedOrder = orderService.submitOrder(
+                buyTicketsRequest,
+                authenticatedUser.id()
         );
+        EntityModel<OrderResponse> orderModel =
+                orderModelAssembler.toModel(submittedOrder);
+
+        return ResponseEntity.accepted()
+                .location(orderModel.getRequiredLink("self").toUri())
+                .body(orderModel);
     }
 
     @GetMapping("/{orderId}/status")

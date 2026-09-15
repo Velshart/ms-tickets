@@ -1,12 +1,11 @@
 package me.mmtr.userservice.service;
 
-import jakarta.transaction.Transactional;
 import me.mmtr.userservice.model.Role;
 import me.mmtr.userservice.model.User;
 import me.mmtr.userservice.model.dto.messaging.UserCreatedEvent;
 import me.mmtr.userservice.model.dto.request.AuthenticationRequest;
-import me.mmtr.userservice.model.dto.response.AuthenticationResponse;
 import me.mmtr.userservice.model.dto.request.RegisterRequest;
+import me.mmtr.userservice.model.dto.response.AuthenticationResponse;
 import me.mmtr.userservice.model.dto.response.UserResponse;
 import me.mmtr.userservice.repository.UserRepository;
 import org.springframework.context.ApplicationEventPublisher;
@@ -15,6 +14,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthenticationService {
@@ -60,12 +60,7 @@ public class AuthenticationService {
                 savedUser.getId(),
                 savedUser.getEmail()
         ));
-        return new UserResponse(
-                savedUser.getId(),
-                savedUser.getUsername(),
-                savedUser.getEmail(),
-                savedUser.getRole().toString()
-        );
+        return UserResponse.fromUser(savedUser);
     }
 
     public AuthenticationResponse login(

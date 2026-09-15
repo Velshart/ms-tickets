@@ -21,6 +21,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -69,7 +73,7 @@ public class OrderServiceTests {
 
         @Test
         void shouldSubmitOrderAndPublishEventWhenEventIsActive() {
-            BuyTicketsRequest request = new BuyTicketsRequest(ACTIVE_EVENT_ID, 2L);
+            BuyTicketsRequest request = new BuyTicketsRequest(ACTIVE_EVENT_ID, 2);
 
             when(eventQueryService.getEventEntity(ACTIVE_EVENT_ID)).thenReturn(activeEvent);
             when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> {
@@ -92,14 +96,14 @@ public class OrderServiceTests {
             assertEquals(SAVED_ORDER_ID, publishedEvent.orderId());
             assertEquals(USER_ID, publishedEvent.userId());
             assertEquals(ACTIVE_EVENT_ID, publishedEvent.eventId());
-            assertEquals(2L, publishedEvent.ticketQuantity());
+            assertEquals(2, publishedEvent.ticketQuantity());
         }
 
         @Test
         void shouldThrowTicketSalesClosedExceptionWhenEventIsNotActive() {
             BuyTicketsRequest request = new BuyTicketsRequest(
                     INACTIVE_EVENT_ID,
-                    2L
+                    2
             );
             when(eventQueryService.getEventEntity(INACTIVE_EVENT_ID)).thenReturn(inactiveEvent);
 
@@ -138,18 +142,23 @@ public class OrderServiceTests {
         }
 
         @Test
-        void shouldReturnAllOrdersByUserId() {
+        void shouldReturnPagedOrdersByUserId() {
             Order order1 = new Order(USER_ID, activeEvent);
             order1.setId(1L);
             Order order2 = new Order(USER_ID, activeEvent);
             order2.setId(2L);
 
-            when(orderRepository.findAllByUserId(USER_ID)).thenReturn(List.of(order1, order2));
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<Order> page = new PageImpl<>(List.of(order1, order2), pageable, 2);
 
-            List<OrderResponse> result = orderService.getAllOrdersByUserId(USER_ID);
+            when(orderRepository.findAllByUserId(USER_ID, pageable)).thenReturn(page);
 
-            assertEquals(2, result.size());
-            verify(orderRepository).findAllByUserId(USER_ID);
+            Page<OrderResponse> result = orderService.getAllOrdersByUserId(USER_ID, pageable);
+
+            assertNotNull(result);
+            assertEquals(2, result.getTotalElements());
+            assertEquals(2, result.getContent().size());
+            verify(orderRepository).findAllByUserId(USER_ID, pageable);
         }
     }
 
@@ -192,7 +201,7 @@ public class OrderServiceTests {
             verify(eventQueryService).returnTickets(activeEvent.getId(), 1);
             verify(orderRepository).delete(order);
 
-            ArgumentCaptor<OrderDeletedEvent> eventCaptor = ArgumentCaptor.captor();
+            ArgumentCaptor<OrderDeletedEvent> eventCaptor = ArgumentCaptor.forClass(OrderDeletedEvent.class);
             verify(publisher).publishEvent(eventCaptor.capture());
 
             OrderDeletedEvent publishedEvent = eventCaptor.getValue();

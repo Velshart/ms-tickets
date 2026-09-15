@@ -5,8 +5,8 @@ import me.mmtr.ticketservice.model.OrderStatus;
 import me.mmtr.ticketservice.model.dto.event.ChangeEventStatusRequest;
 import me.mmtr.ticketservice.model.dto.event.CreateEventRequest;
 import me.mmtr.ticketservice.model.dto.event.EventResponse;
-import me.mmtr.ticketservice.model.dto.ticket.BuyTicketsRequest;
 import me.mmtr.ticketservice.model.dto.order.OrderResponse;
+import me.mmtr.ticketservice.model.dto.ticket.BuyTicketsRequest;
 import me.mmtr.ticketservice.repository.OrderRepository;
 import me.mmtr.ticketservice.service.EventManagementService;
 import me.mmtr.ticketservice.service.OrderService;
@@ -14,19 +14,19 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 public class OrderControllerIntegrationTests extends TicketServiceModuleIntegrationTest {
 
@@ -62,8 +62,8 @@ public class OrderControllerIntegrationTests extends TicketServiceModuleIntegrat
     }
 
     private OrderResponse createOrder(Long eventId, Long userId) {
-        long ticketQuantity = 10;
-        return orderService.createOrder(
+        int ticketQuantity = 10;
+        return orderService.submitOrder(
                 new BuyTicketsRequest(eventId, ticketQuantity), userId
         );
     }
@@ -81,10 +81,10 @@ public class OrderControllerIntegrationTests extends TicketServiceModuleIntegrat
             mockMvc.perform(get("/api/orders/{orderId}", createdOrder.id())
                             .with(withUser(USER_ID, USER_ROLE)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.id")
-                            .value(createdOrder.id()))
-                    .andExpect(jsonPath("$.eventId")
-                            .value(event.id()));
+                    .andExpect(jsonPath("$.id").value(createdOrder.id()))
+                    .andExpect(jsonPath("$.eventId").value(event.id()))
+                    .andExpect(jsonPath("$._links.self.href").exists())
+                    .andExpect(jsonPath("$._links.event.href").exists());
         }
 
         @Test
@@ -109,30 +109,16 @@ public class OrderControllerIntegrationTests extends TicketServiceModuleIntegrat
             OrderResponse order2 = createOrder(event2.id(), USER_ID);
 
             mockMvc.perform(get("/api/orders")
+                            .param("page", "0")
+                            .param("size", "10")
                             .with(withUser(USER_ID, USER_ROLE)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$").isArray())
-                    .andExpect(jsonPath("$.length()")
-                            .value(2))
-                    .andExpect(jsonPath("$[0].id").value(order1.id()))
-                    .andExpect(jsonPath("$[1].id").value(order2.id()));
-        }
-
-        @Test
-        void shouldMergeTwoOrdersOfSameForSameEventIntoOne() throws Exception {
-            EventResponse event = createEventAndOpenTicketSales("Event");
-
-            OrderResponse order1 = createOrder(event.id(), USER_ID);
-            createOrder(event.id(), USER_ID);
-
-            mockMvc.perform(get("/api/orders")
-                            .with(withUser(USER_ID, USER_ROLE)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$").isArray())
-                    .andExpect(jsonPath("$.length()")
-                            .value(1))
-                    .andExpect(jsonPath("$[0].id")
-                            .value(order1.id()));
+                    .andExpect(jsonPath("$._embedded.orders").isArray())
+                    .andExpect(jsonPath("$._embedded.orders.length()").value(2))
+                    .andExpect(jsonPath("$._embedded.orders[0].id").value(order1.id()))
+                    .andExpect(jsonPath("$._embedded.orders[1].id").value(order2.id()))
+                    .andExpect(jsonPath("$._links.self.href").exists())
+                    .andExpect(jsonPath("$.page.totalElements").value(2));
         }
 
         @Test
@@ -140,9 +126,9 @@ public class OrderControllerIntegrationTests extends TicketServiceModuleIntegrat
             mockMvc.perform(get("/api/orders")
                             .with(withUser(USER_ID, USER_ROLE)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$").isArray())
-                    .andExpect(jsonPath("$.length()")
-                            .value(0));
+                    .andExpect(jsonPath("$._embedded").doesNotExist())
+                    .andExpect(jsonPath("$._links.self.href").exists())
+                    .andExpect(jsonPath("$.page.totalElements").value(0));
         }
     }
 
@@ -165,6 +151,9 @@ public class OrderControllerIntegrationTests extends TicketServiceModuleIntegrat
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isAccepted())
+                    .andExpect(header().exists("Location"))
+                    .andExpect(jsonPath("$.id").exists())
+                    .andExpect(jsonPath("$._links.self.href").exists())
                     .andReturn();
 
             OrderResponse response = objectMapper.readValue(
@@ -177,9 +166,9 @@ public class OrderControllerIntegrationTests extends TicketServiceModuleIntegrat
             assertEquals(event.id(), fetchedOrder.eventId());
             assertEquals(OrderStatus.PENDING, fetchedOrder.orderStatus());
 
-            List<OrderResponse> userOrders = orderService.getAllOrdersByUserId(USER_ID);
-            assertEquals(1, userOrders.size());
-            assertEquals(response.id(), userOrders.getFirst().id());
+            Page<OrderResponse> userOrders = orderService.getAllOrdersByUserId(USER_ID, PageRequest.of(0, 10));
+            assertEquals(1, userOrders.getTotalElements());
+            assertEquals(response.id(), userOrders.getContent().getFirst().id());
         }
 
         @Test
@@ -210,8 +199,10 @@ public class OrderControllerIntegrationTests extends TicketServiceModuleIntegrat
                             .with(withUser(USER_ID, USER_ROLE)))
                     .andExpect(status().isNoContent());
 
-            List<OrderResponse> userOrders =
-                    orderService.getAllOrdersByUserId(USER_ID);
+            Page<OrderResponse> userOrders = orderService.getAllOrdersByUserId(
+                    USER_ID,
+                    PageRequest.of(0, 10)
+            );
             assertTrue(userOrders.isEmpty());
         }
 
@@ -239,8 +230,7 @@ public class OrderControllerIntegrationTests extends TicketServiceModuleIntegrat
                             .with(withUser(ADMIN_ID, "ROLE_ADMIN")))
                     .andExpect(status().isNoContent());
 
-            List<OrderResponse> userOrders =
-                    orderService.getAllOrdersByUserId(USER_ID);
+            Page<OrderResponse> userOrders = orderService.getAllOrdersByUserId(USER_ID, PageRequest.of(0, 10));
             assertTrue(userOrders.isEmpty());
         }
 

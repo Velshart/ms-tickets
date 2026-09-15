@@ -1,6 +1,5 @@
 package me.mmtr.ticketservice.service;
 
-import jakarta.transaction.Transactional;
 import me.mmtr.ticketservice.model.Event;
 import me.mmtr.ticketservice.model.dto.event.ChangeEventStatusRequest;
 import me.mmtr.ticketservice.model.dto.event.CreateEventRequest;
@@ -14,6 +13,7 @@ import me.mmtr.ticketservice.model.exception.EventAlreadyRegisteredException;
 import me.mmtr.ticketservice.repository.EventRepository;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;

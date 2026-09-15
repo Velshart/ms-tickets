@@ -16,13 +16,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -80,25 +82,40 @@ public class UserServiceTests {
     @Nested
     class ListUsersTests {
         @Test
-        void shouldListExistingUsers() {
-            when(userRepository.findAll())
-                    .thenReturn(List.of(testUser));
+        void shouldListExistingUser() {
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<User> userPage = new PageImpl<>(
+                    Collections.singletonList(testUser),
+                    pageable,
+                    1
+            );
 
-            List<UserResponse> users = userService.listUsers();
+            when(userRepository.findAll(pageable)).thenReturn(userPage);
 
-            assertEquals(1, users.size());
-            assertEquals(testUser.getId(), users.getFirst().id());
-            assertEquals(testUser.getUsername(), users.getFirst().username());
-            assertEquals(Role.SUPER_ADMIN.toString(), users.getFirst().role());
+            Page<UserResponse> userResponsePage = userService.listUsers(pageable);
+            assertEquals(1, userResponsePage.getTotalElements());
+            assertEquals(1, userResponsePage.getContent().size());
+
+            UserResponse userResponse = userResponsePage.getContent().getFirst();
+            assertEquals(TEST_USER_ID, userResponse.id());
+            assertEquals(TEST_USER_NAME, userResponse.username());
+            assertEquals(Role.SUPER_ADMIN.toString(), userResponse.role());
         }
 
         @Test
-        void shouldReturnEmptyListWhenNoUserFound() {
-            when(userRepository.findAll())
-                    .thenReturn(Collections.emptyList());
+        void shouldReturnEmptyPageWhenNoUserFound() {
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<User> userPage = new PageImpl<>(
+                    Collections.emptyList(),
+                    pageable,
+                    0
+            );
 
-            List<UserResponse> users = userService.listUsers();
-            assertEquals(0, users.size());
+            when(userRepository.findAll(pageable)).thenReturn(userPage);
+
+            Page<UserResponse> userResponsePage = userService.listUsers(pageable);
+            assertTrue(userPage.isEmpty());
+            assertEquals(0, userResponsePage.getTotalElements());
         }
     }
 

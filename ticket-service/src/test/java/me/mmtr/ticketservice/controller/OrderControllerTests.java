@@ -1,5 +1,6 @@
 package me.mmtr.ticketservice.controller;
 
+import me.mmtr.ticketservice.assembler.OrderModelAssembler;
 import me.mmtr.ticketservice.model.OrderStatus;
 import me.mmtr.ticketservice.model.authentication.AuthenticatedUser;
 import me.mmtr.ticketservice.model.dto.order.OrderResponse;
@@ -12,6 +13,11 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -20,6 +26,8 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -27,6 +35,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(OrderController.class)
+@Import(OrderModelAssembler.class)
 public class OrderControllerTests {
 
     private static final Long ORDER_ID = 1L;
@@ -39,6 +48,7 @@ public class OrderControllerTests {
 
     @Autowired
     private ObjectMapper objectMapper;
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -69,31 +79,35 @@ public class OrderControllerTests {
         );
     }
 
-
     @Nested
     class GetAllOrdersForUserTests {
 
         @Test
-        void shouldReturnAllOrdersForUser() throws Exception {
-            when(orderService.getAllOrdersByUserId(USER_ID))
-                    .thenReturn(List.of(orderResponse));
+        void shouldReturnPagedOrdersForUser() throws Exception {
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<OrderResponse> page = new PageImpl<>(List.of(orderResponse), pageable, 1);
+
+            when(orderService.getAllOrdersByUserId(eq(USER_ID), any(Pageable.class))).thenReturn(page);
 
             mockMvc.perform(get("/api/orders")
+                            .param("page", "0")
+                            .param("size", "10")
                             .with(user(user)))
                     .andExpect(status().isOk())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$.length()")
-                            .value(1))
-                    .andExpect(jsonPath("$[0].id").value(ORDER_ID));
+                    .andExpect(jsonPath("$._embedded.orders[0].id").value(ORDER_ID))
+                    .andExpect(jsonPath("$._embedded.orders[0]._links.self.href").exists())
+                    .andExpect(jsonPath("$._links.self.href").exists())
+                    .andExpect(jsonPath("$.page.totalElements").value(1));
 
-            verify(orderService).getAllOrdersByUserId(USER_ID);
+            verify(orderService).getAllOrdersByUserId(eq(USER_ID), any(Pageable.class));
         }
     }
 
     @Nested
     class CreateOrderTests {
+
         @Test
-        void shouldSubmitOrderAndReturnAccepted() throws Exception {
+        void shouldSubmitOrderAndReturnAcceptedWithLocationHeader() throws Exception {
             when(orderService.submitOrder(buyTicketsRequest, USER_ID))
                     .thenReturn(orderResponse);
 
@@ -103,21 +117,21 @@ public class OrderControllerTests {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(buyTicketsRequest)))
                     .andExpect(status().isAccepted())
+                    .andExpect(header().exists("Location"))
                     .andExpect(jsonPath("$.id").value(ORDER_ID))
                     .andExpect(jsonPath("$.userId").value(USER_ID))
                     .andExpect(jsonPath("$.eventId").value(EVENT_ID))
-                    .andExpect(jsonPath("$.orderStatus")
-                            .value(OrderStatus.PENDING.toString()))
-                    .andExpect(jsonPath("$.tickets").isEmpty());
+                    .andExpect(jsonPath("$.orderStatus").value(OrderStatus.PENDING.toString()))
+                    .andExpect(jsonPath("$._links.self.href").exists());
         }
     }
 
     @Nested
     class GetOrderStatusTests {
+
         @Test
         void shouldReturnOrderStatusWithOk() throws Exception {
-            OrderStatusResponse statusResponse =
-                    new OrderStatusResponse(ORDER_ID, OrderStatus.PENDING);
+            OrderStatusResponse statusResponse = new OrderStatusResponse(ORDER_ID, OrderStatus.PENDING);
 
             when(orderService.getOrderStatus(ORDER_ID, USER_ID))
                     .thenReturn(statusResponse);
@@ -125,10 +139,8 @@ public class OrderControllerTests {
             mockMvc.perform(get("/api/orders/" + ORDER_ID + "/status")
                             .with(user(user)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.orderId")
-                            .value(ORDER_ID))
-                    .andExpect(jsonPath("$.orderStatus")
-                            .value(OrderStatus.PENDING.toString()));
+                    .andExpect(jsonPath("$.orderId").value(ORDER_ID))
+                    .andExpect(jsonPath("$.orderStatus").value(OrderStatus.PENDING.toString()));
         }
 
         @Test
@@ -197,21 +209,21 @@ public class OrderControllerTests {
         }
     }
 
-
     @Nested
     class GetOrderByIdTests {
 
         @Test
-        void shouldReturnOrderById() throws Exception {
+        void shouldReturnOrderByIdWithHateoasLinks() throws Exception {
             when(orderService.getOrder(ORDER_ID, USER_ID))
                     .thenReturn(orderResponse);
 
             mockMvc.perform(get("/api/orders/{orderId}", ORDER_ID)
                             .with(user(user)))
                     .andExpect(status().isOk())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.id").value(ORDER_ID))
-                    .andExpect(jsonPath("$.eventId").value(EVENT_ID));
+                    .andExpect(jsonPath("$.eventId").value(EVENT_ID))
+                    .andExpect(jsonPath("$._links.self.href").exists())
+                    .andExpect(jsonPath("$._links.event.href").exists());
 
             verify(orderService).getOrder(ORDER_ID, USER_ID);
         }

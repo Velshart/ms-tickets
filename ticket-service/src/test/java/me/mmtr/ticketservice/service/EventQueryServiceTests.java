@@ -11,6 +11,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -67,7 +71,7 @@ public class EventQueryServiceTests {
         }
 
         @Test
-        void shouldReturnAllEvents() {
+        void shouldReturnPagedEvents() {
             Event event2 = new Event("Second Event",
                     BigDecimal.valueOf(10),
                     OffsetDateTime.now().plusDays(1),
@@ -75,13 +79,16 @@ public class EventQueryServiceTests {
                     500L);
             event2.setName("Second Event");
 
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<Event> page = new PageImpl<>(List.of(event, event2), pageable, 2);
 
-            when(eventRepository.findAll()).thenReturn(List.of(event, event2));
+            when(eventRepository.findAll(pageable)).thenReturn(page);
 
-            List<EventResponse> result = eventQueryService.getAllEvents();
+            Page<EventResponse> result = eventQueryService.getAllEvents(pageable);
 
-            assertEquals(2, result.size());
-            verify(eventRepository).findAll();
+            assertEquals(2, result.getTotalElements());
+            assertEquals(2, result.getContent().size());
+            verify(eventRepository).findAll(pageable);
         }
 
         @Test
