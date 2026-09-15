@@ -10,14 +10,14 @@ services:
       - "5432:5432"
 
   ticket-service-db:
-      image: postgres:16-alpine
-      container_name: ticket-service-db
-      environment:
-        POSTGRES_DB: ticket_service_db
-        POSTGRES_USER: ${DATABASE_USERNAME}
-        POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-      ports:
-        - "5433:5432"
+    image: postgres:16-alpine
+    container_name: ticket-service-db
+    environment:
+      POSTGRES_DB: ticket_service_db
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    ports:
+      - "5433:5432"
 
   notification-service-db:
     image: postgres:16-alpine
@@ -38,6 +38,12 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "${REDIS_PORT}:6379"
 
   mailpit:
     image: axllent/mailpit:latest

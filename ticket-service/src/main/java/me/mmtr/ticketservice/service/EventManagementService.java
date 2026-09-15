@@ -9,7 +9,7 @@ import me.mmtr.ticketservice.model.dto.event.UpdateEventRequest;
 import me.mmtr.ticketservice.model.dto.messaging.EventDeletedEvent;
 import me.mmtr.ticketservice.model.dto.messaging.EventStatusChangedEvent;
 import me.mmtr.ticketservice.model.dto.messaging.EventUpdatedEvent;
-import me.mmtr.ticketservice.model.dto.ticket.OrderResponse;
+import me.mmtr.ticketservice.model.dto.order.OrderResponse;
 import me.mmtr.ticketservice.model.exception.EventAlreadyRegisteredException;
 import me.mmtr.ticketservice.repository.EventRepository;
 import org.springframework.context.ApplicationEventPublisher;

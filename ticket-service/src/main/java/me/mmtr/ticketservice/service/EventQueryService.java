@@ -1,11 +1,12 @@
 package me.mmtr.ticketservice.service;
 
-import jakarta.transaction.Transactional;
 import me.mmtr.ticketservice.model.Event;
 import me.mmtr.ticketservice.model.dto.event.EventResponse;
 import me.mmtr.ticketservice.model.exception.EventNotFoundException;
+import me.mmtr.ticketservice.model.exception.TicketsSoldOutException;
 import me.mmtr.ticketservice.repository.EventRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -32,7 +33,7 @@ public class EventQueryService {
                 .toList();
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = TicketsSoldOutException.class)
     public long reserveTickets(Long eventId, long quantity) {
         Event event = getEventById(eventId);
 

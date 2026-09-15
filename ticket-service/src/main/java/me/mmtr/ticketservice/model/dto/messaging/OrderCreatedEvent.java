@@ -3,7 +3,7 @@ package me.mmtr.ticketservice.model.dto.messaging;
 import java.io.Serializable;
 
 public record OrderCreatedEvent(
-        Long id,
+        Long orderId,
         Long userId,
         String eventName,
         long ticketQuantity

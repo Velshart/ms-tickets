@@ -7,8 +7,10 @@ import me.mmtr.ticketservice.model.Order;
 import me.mmtr.ticketservice.model.Ticket;
 import me.mmtr.ticketservice.model.dto.messaging.OrderCreatedEvent;
 import me.mmtr.ticketservice.model.dto.messaging.OrderDeletedEvent;
+import me.mmtr.ticketservice.model.dto.messaging.OrderSubmittedEvent;
 import me.mmtr.ticketservice.model.dto.ticket.BuyTicketsRequest;
-import me.mmtr.ticketservice.model.dto.ticket.OrderResponse;
+import me.mmtr.ticketservice.model.dto.order.OrderResponse;
+import me.mmtr.ticketservice.model.dto.order.OrderStatusResponse;
 import me.mmtr.ticketservice.model.exception.OrderNotFoundException;
 import me.mmtr.ticketservice.model.exception.TicketSalesClosedException;
 import me.mmtr.ticketservice.repository.OrderRepository;
@@ -32,6 +34,28 @@ public class OrderService {
         this.eventQueryService = eventQueryService;
         this.orderRepository = orderRepository;
         this.publisher = publisher;
+    }
+
+    @Transactional
+    public OrderResponse submitOrder(
+            BuyTicketsRequest request,
+            Long userId
+    ) {
+        Event event = eventQueryService.getEventEntity(request.eventId());
+        if (event.getStatus() != EventStatus.ACTIVE) {
+            throw new TicketSalesClosedException(request.eventId());
+        }
+
+        Order order = new Order(userId, event);
+        Order savedOrder = orderRepository.save(order);
+
+        publisher.publishEvent(new OrderSubmittedEvent(
+                savedOrder.getId(),
+                userId,
+                request.eventId(),
+                request.ticketQuantity()
+        ));
+        return OrderResponse.from(savedOrder);
     }
 
     @Transactional
@@ -141,5 +165,10 @@ public class OrderService {
         );
 
         orderRepository.delete(order);
+    }
+
+    public OrderStatusResponse getOrderStatus(Long orderId, Long userId) {
+        Order order = getOrderByIdAndUserId(orderId, userId);
+        return OrderStatusResponse.from(order);
     }
 }

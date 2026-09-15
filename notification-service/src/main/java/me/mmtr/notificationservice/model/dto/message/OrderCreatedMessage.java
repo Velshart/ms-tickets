@@ -3,7 +3,7 @@ package me.mmtr.notificationservice.model.dto.message;
 import java.io.Serializable;
 
 public record OrderCreatedMessage(
-        Long id,
+        Long orderId,
         Long userId,
         String eventName,
         long ticketQuantity

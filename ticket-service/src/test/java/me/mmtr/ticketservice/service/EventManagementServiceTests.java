@@ -9,7 +9,7 @@ import me.mmtr.ticketservice.model.dto.event.UpdateEventRequest;
 import me.mmtr.ticketservice.model.dto.messaging.EventDeletedEvent;
 import me.mmtr.ticketservice.model.dto.messaging.EventStatusChangedEvent;
 import me.mmtr.ticketservice.model.dto.messaging.EventUpdatedEvent;
-import me.mmtr.ticketservice.model.dto.ticket.OrderResponse;
+import me.mmtr.ticketservice.model.dto.order.OrderResponse;
 import me.mmtr.ticketservice.repository.EventRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -33,7 +33,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class EventManagementServiceTests {
-
     private static final Long EVENT_ID = 1L;
     private static final Long USER_ID_1 = 100L;
     private static final Long USER_ID_2 = 101L;

@@ -4,10 +4,11 @@ import me.mmtr.ticketservice.model.Event;
 import me.mmtr.ticketservice.model.EventStatus;
 import me.mmtr.ticketservice.model.Order;
 import me.mmtr.ticketservice.model.Ticket;
-import me.mmtr.ticketservice.model.dto.messaging.OrderCreatedEvent;
 import me.mmtr.ticketservice.model.dto.messaging.OrderDeletedEvent;
+import me.mmtr.ticketservice.model.dto.messaging.OrderSubmittedEvent;
+import me.mmtr.ticketservice.model.dto.order.OrderResponse;
+import me.mmtr.ticketservice.model.dto.order.OrderStatusResponse;
 import me.mmtr.ticketservice.model.dto.ticket.BuyTicketsRequest;
-import me.mmtr.ticketservice.model.dto.ticket.OrderResponse;
 import me.mmtr.ticketservice.model.exception.OrderNotFoundException;
 import me.mmtr.ticketservice.model.exception.TicketSalesClosedException;
 import me.mmtr.ticketservice.repository.OrderRepository;
@@ -26,7 +27,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -65,72 +65,48 @@ public class OrderServiceTests {
     }
 
     @Nested
-    class CreateOrderTests {
+    class SubmitOrderTests {
 
         @Test
-        void shouldCreateNewOrderAndPublishEventWhenOrderDoesNotExist() {
+        void shouldSubmitOrderAndPublishEventWhenEventIsActive() {
             BuyTicketsRequest request = new BuyTicketsRequest(ACTIVE_EVENT_ID, 2L);
 
             when(eventQueryService.getEventEntity(ACTIVE_EVENT_ID)).thenReturn(activeEvent);
-            when(eventQueryService.reserveTickets(ACTIVE_EVENT_ID, 2L)).thenReturn(2L);
-            when(orderRepository.findByUserIdAndEventId(USER_ID, ACTIVE_EVENT_ID)).thenReturn(Optional.empty());
-
             when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> {
                 Order orderToSave = invocation.getArgument(0);
                 orderToSave.setId(SAVED_ORDER_ID);
                 return orderToSave;
             });
 
-            OrderResponse response = orderService.createOrder(request, USER_ID);
+            OrderResponse response = orderService.submitOrder(request, USER_ID);
 
             assertNotNull(response);
             assertEquals(SAVED_ORDER_ID, response.id());
-            assertEquals(2, response.tickets().size());
 
             verify(orderRepository).save(any(Order.class));
 
-            ArgumentCaptor<OrderCreatedEvent> eventCaptor = ArgumentCaptor.captor();
+            ArgumentCaptor<OrderSubmittedEvent> eventCaptor = ArgumentCaptor.forClass(OrderSubmittedEvent.class);
             verify(publisher).publishEvent(eventCaptor.capture());
 
-            OrderCreatedEvent publishedEvent = eventCaptor.getValue();
-            assertEquals(SAVED_ORDER_ID, publishedEvent.id());
+            OrderSubmittedEvent publishedEvent = eventCaptor.getValue();
+            assertEquals(SAVED_ORDER_ID, publishedEvent.orderId());
             assertEquals(USER_ID, publishedEvent.userId());
-            assertEquals("Active Event", publishedEvent.eventName());
+            assertEquals(ACTIVE_EVENT_ID, publishedEvent.eventId());
             assertEquals(2L, publishedEvent.ticketQuantity());
         }
 
         @Test
-        void shouldAddTicketsToExistingOrderWhenOrderAlreadyExists() {
-            BuyTicketsRequest request = new BuyTicketsRequest(ACTIVE_EVENT_ID, 2L);
-
-            Order existingOrder = new Order(USER_ID, activeEvent);
-            existingOrder.setId(SAVED_ORDER_ID);
-            existingOrder.addTicket(new Ticket(existingOrder));
-
-            when(eventQueryService.getEventEntity(ACTIVE_EVENT_ID)).thenReturn(activeEvent);
-            when(eventQueryService.reserveTickets(ACTIVE_EVENT_ID, 2L)).thenReturn(2L);
-            when(orderRepository.findByUserIdAndEventId(USER_ID, ACTIVE_EVENT_ID)).thenReturn(Optional.of(existingOrder));
-            when(orderRepository.save(existingOrder)).thenReturn(existingOrder);
-
-            OrderResponse response = orderService.createOrder(request, USER_ID);
-
-            assertNotNull(response);
-            assertEquals(3, response.tickets().size());
-            verify(orderRepository).save(existingOrder);
-            verify(publisher).publishEvent(any(OrderCreatedEvent.class));
-        }
-
-        @Test
         void shouldThrowTicketSalesClosedExceptionWhenEventIsNotActive() {
-            BuyTicketsRequest request = new BuyTicketsRequest(INACTIVE_EVENT_ID, 2L);
-
+            BuyTicketsRequest request = new BuyTicketsRequest(
+                    INACTIVE_EVENT_ID,
+                    2L
+            );
             when(eventQueryService.getEventEntity(INACTIVE_EVENT_ID)).thenReturn(inactiveEvent);
 
             assertThrows(TicketSalesClosedException.class, () ->
-                    orderService.createOrder(request, USER_ID)
+                    orderService.submitOrder(request, USER_ID)
             );
 
-            verify(eventQueryService, never()).reserveTickets(anyLong(), anyLong());
             verify(orderRepository, never()).save(any(Order.class));
             verify(publisher, never()).publishEvent(any());
         }
@@ -229,6 +205,32 @@ public class OrderServiceTests {
             orderService.deleteAllOrdersForEvent(ACTIVE_EVENT_ID);
 
             verify(orderRepository).deleteAllByEventId(ACTIVE_EVENT_ID);
+        }
+    }
+
+    @Nested
+    class GetOrderStatusTests {
+
+        @Test
+        void shouldReturnOrderStatusResponseWhenOrderExists() {
+            Order order = new Order(USER_ID, activeEvent);
+            order.setId(ORDER_ID);
+
+            when(orderRepository.findByIdAndUserId(ORDER_ID, USER_ID)).thenReturn(Optional.of(order));
+
+            OrderStatusResponse response = orderService.getOrderStatus(ORDER_ID, USER_ID);
+
+            assertNotNull(response);
+            verify(orderRepository).findByIdAndUserId(ORDER_ID, USER_ID);
+        }
+
+        @Test
+        void shouldThrowOrderNotFoundExceptionWhenOrderDoesNotExist() {
+            when(orderRepository.findByIdAndUserId(ORDER_ID, USER_ID)).thenReturn(Optional.empty());
+
+            assertThrows(OrderNotFoundException.class, () ->
+                    orderService.getOrderStatus(ORDER_ID, USER_ID)
+            );
         }
     }
 }

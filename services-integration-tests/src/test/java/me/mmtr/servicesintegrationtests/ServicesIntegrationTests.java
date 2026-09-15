@@ -6,7 +6,9 @@ import com.icegreen.greenmail.util.GreenMail;
 import com.icegreen.greenmail.util.ServerSetupTest;
 import jakarta.mail.internet.MimeMessage;
 import me.mmtr.notificationservice.repository.UserIdEmailRepository;
+import me.mmtr.ticketservice.model.Event;
 import me.mmtr.ticketservice.model.EventStatus;
+import me.mmtr.ticketservice.model.OrderStatus;
 import me.mmtr.ticketservice.model.authentication.AuthenticatedUser;
 import me.mmtr.ticketservice.model.dto.event.ChangeEventStatusRequest;
 import me.mmtr.ticketservice.model.dto.event.CreateEventRequest;
@@ -32,6 +34,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.rabbitmq.RabbitMQContainer;
 import tools.jackson.databind.ObjectMapper;
@@ -39,7 +42,9 @@ import tools.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -53,6 +58,11 @@ public class ServicesIntegrationTests {
     @ServiceConnection
     private static final PostgreSQLContainer postgres =
             new PostgreSQLContainer("postgres:16-alpine");
+    @ServiceConnection
+    @SuppressWarnings("resource")
+    private static final GenericContainer<?> redis =
+            new GenericContainer<>("redis:7-alpine")
+                    .withExposedPorts(6379);
     @ServiceConnection
     private static final RabbitMQContainer rabbitmq = new RabbitMQContainer(
             "rabbitmq:3.12-management"
@@ -138,7 +148,7 @@ public class ServicesIntegrationTests {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        long eventId = objectMapper
+        Long eventId = objectMapper
                 .readTree(eventResult.getResponse().getContentAsString())
                 .get("id")
                 .asLong();
@@ -187,11 +197,13 @@ public class ServicesIntegrationTests {
                         .with(user(normalUser))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(orderRequest)))
-                .andExpect(status().isCreated());
+                .andExpect(status().isAccepted());
 
-        var updatedEvent = eventRepository.findById(eventId).orElseThrow();
-        assertEquals(98, updatedEvent.getAvailableTickets());
-        assertEquals(1, orderRepository.findAll().size());
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            var updatedEvent = eventRepository.findById(eventId).orElseThrow();
+            assertEquals(98, updatedEvent.getAvailableTickets());
+            assertEquals(1, orderRepository.findAll().size());
+        });
 
         boolean emailArrived =
                 greenMail.waitForIncomingEmail(5000, 2);
@@ -267,14 +279,20 @@ public class ServicesIntegrationTests {
                         .with(user(userA))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(buyTicketsRequest)))
-                .andExpect(status().isCreated());
+                .andExpect(status().isAccepted());
 
         mockMvc.perform(post("/api/orders")
                         .with(csrf())
                         .with(user(userB))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(buyTicketsRequest)))
-                .andExpect(status().isCreated());
+                .andExpect(status().isAccepted());
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertEquals(2, orderRepository.findAll().size());
+            Event event = eventRepository.findById(createdEventId).orElseThrow();
+            assertEquals(40, event.getAvailableTickets());
+        });
 
         greenMail.purgeEmailFromAllMailboxes();
 
@@ -350,19 +368,19 @@ public class ServicesIntegrationTests {
                         .with(user(user))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(buyTicketsRequest)))
-                .andExpect(status().isCreated())
+                .andExpect(status().isAccepted())
                 .andReturn();
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertEquals(1, orderRepository.findAll().size());
+            Event event = eventRepository.findById(createdEventId).orElseThrow();
+            assertEquals(9L, event.getAvailableTickets());
+        });
 
         Long createdOrderId = objectMapper
                 .readTree(createOrderResult.getResponse().getContentAsString())
                 .get("id")
                 .asLong();
-
-        assertEquals(
-                9,
-                eventRepository
-                        .findById(createdEventId).orElseThrow().getAvailableTickets()
-        );
 
         mockMvc.perform(delete("/api/orders/{id}", createdOrderId)
                         .with(csrf())
@@ -377,7 +395,7 @@ public class ServicesIntegrationTests {
     }
 
     @Test
-    void shouldReturnConflictWhenNoTicketsAvailable() throws Exception {
+    void shouldSetTicketSoldOutStatusForOrderWhenNoTicketsAvailable() throws Exception {
         CreateEventRequest createEventRequest = new CreateEventRequest(
                 "Event", BigDecimal.valueOf(80.00),
                 OffsetDateTime.now().plusDays(3),
@@ -437,20 +455,43 @@ public class ServicesIntegrationTests {
                         .with(user(userA))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(buyTicketsRequest)))
-                .andExpect(status().isCreated());
+                .andExpect(status().isAccepted());
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertEquals(1, orderRepository.findAll().size());
+            Event event = eventRepository.findById(createdEventId).orElseThrow();
+            assertEquals(0L, event.getAvailableTickets());
+        });
 
         mockMvc.perform(post("/api/orders")
                         .with(csrf())
                         .with(user(userB))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(buyTicketsRequest)))
-                .andExpect(status().isConflict());
+                .andExpect(status().isAccepted())
+                .andReturn();
 
-        assertEquals(
-                0,
-                eventRepository
-                        .findById(createdEventId).orElseThrow().getAvailableTickets()
-        );
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            var orders = orderRepository.findAll();
+            assertEquals(2, orders.size());
+
+            long confirmedOrdersCount = orders.stream()
+                    .filter(order -> order.getOrderStatus() == OrderStatus.CONFIRMED)
+                    .count();
+            long soldOutOrdersCount = orders.stream()
+                    .filter(order -> order.getOrderStatus() == OrderStatus.TICKETS_SOLD_OUT)
+                    .count();
+
+            assertEquals(1, confirmedOrdersCount);
+            assertEquals(1, soldOutOrdersCount);
+
+            assertEquals(
+                    0,
+                    eventRepository.findById(createdEventId)
+                            .orElseThrow()
+                            .getAvailableTickets()
+            );
+        });
     }
 
     private Long registerUser(String username, String email) throws Exception {
