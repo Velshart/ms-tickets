@@ -2,10 +2,12 @@ package me.mmtr.ticketservice.model.dto.event;
 
 import me.mmtr.ticketservice.model.Event;
 import me.mmtr.ticketservice.model.EventStatus;
+import org.springframework.hateoas.server.core.Relation;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
+@Relation(collectionRelation = "events", itemRelation = "event")
 public record EventResponse(
         Long id,
         String name,

@@ -22,8 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 public class EventControllerIntegrationTests extends TicketServiceModuleIntegrationTest {
     @Autowired
@@ -64,7 +63,9 @@ public class EventControllerIntegrationTests extends TicketServiceModuleIntegrat
                     .andExpect(jsonPath("$.id")
                             .value(eventResponse.id()))
                     .andExpect(jsonPath("$.name")
-                            .value(eventResponse.name()));
+                            .value(eventResponse.name()))
+                    .andExpect(jsonPath("$._links.self.href").exists())
+                    .andExpect(jsonPath("$._links.events.href").exists());
         }
 
         @Test
@@ -86,19 +87,18 @@ public class EventControllerIntegrationTests extends TicketServiceModuleIntegrat
             EventResponse eventResponse2 = createEvent("Event 2");
 
             mockMvc.perform(get("/api/events")
+                            .param("page", "0")
+                            .param("size", "10")
                             .with(withUser(USER_ID, USER_ROLE)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$").isArray())
-                    .andExpect(jsonPath("$.length()")
-                            .value(2))
-                    .andExpect(jsonPath("$[0].id")
-                            .value(eventResponse1.id()))
-                    .andExpect(jsonPath("$[0].name")
-                            .value(eventResponse1.name()))
-                    .andExpect(jsonPath("$[1].id")
-                            .value(eventResponse2.id()))
-                    .andExpect(jsonPath("$[1].name")
-                            .value(eventResponse2.name()));
+                    .andExpect(jsonPath("$._embedded.events").isArray())
+                    .andExpect(jsonPath("$._embedded.events.length()").value(2))
+                    .andExpect(jsonPath("$._embedded.events[0].id").value(eventResponse1.id()))
+                    .andExpect(jsonPath("$._embedded.events[0].name").value(eventResponse1.name()))
+                    .andExpect(jsonPath("$._embedded.events[1].id").value(eventResponse2.id()))
+                    .andExpect(jsonPath("$._embedded.events[1].name").value(eventResponse2.name()))
+                    .andExpect(jsonPath("$._links.self.href").exists())
+                    .andExpect(jsonPath("$.page.totalElements").value(2));
         }
 
         @Test
@@ -106,9 +106,9 @@ public class EventControllerIntegrationTests extends TicketServiceModuleIntegrat
             mockMvc.perform(get("/api/events")
                             .with(withUser(USER_ID, USER_ROLE)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$").isArray())
-                    .andExpect(jsonPath("$.length()")
-                            .value(0));
+                    .andExpect(jsonPath("$._embedded").doesNotExist())
+                    .andExpect(jsonPath("$._links.self.href").exists())
+                    .andExpect(jsonPath("$.page.totalElements").value(0));
         }
     }
 
@@ -134,6 +134,9 @@ public class EventControllerIntegrationTests extends TicketServiceModuleIntegrat
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(REQUEST)))
                     .andExpect(status().isCreated())
+                    .andExpect(header().exists("Location"))
+                    .andExpect(jsonPath("$.id").exists())
+                    .andExpect(jsonPath("$._links.self.href").exists())
                     .andReturn();
 
             EventResponse eventResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), EventResponse.class);
@@ -181,7 +184,10 @@ public class EventControllerIntegrationTests extends TicketServiceModuleIntegrat
                             .with(withUser(userId, userRole))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(REQUEST)))
-                    .andExpect(status().isOk());
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(eventResponse.id()))
+                    .andExpect(jsonPath("$.name").value(REQUEST.name()))
+                    .andExpect(jsonPath("$._links.self.href").exists());
 
             EventResponse updatedEvent = eventQueryService.getEvent(eventResponse.id());
             assertEquals(REQUEST.name(), updatedEvent.name());
@@ -242,28 +248,17 @@ public class EventControllerIntegrationTests extends TicketServiceModuleIntegrat
                             .with(withUser(userId, userRole))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(REQUEST)))
-                    .andExpect(status().isOk());
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(eventResponse.id()))
+                    .andExpect(jsonPath("$.status").value(EventStatus.ACTIVE.toString()))
+                    .andExpect(jsonPath("$._links.self.href").exists());
 
-            EventResponse updatedEvent =
-                    eventQueryService.getEvent(eventResponse.id());
-            assertEquals(
-                    eventResponse.name(),
-                    updatedEvent.name()
-            );
-            assertEquals(
-                    eventResponse.price(),
-                    updatedEvent.price()
-            );
-            assertTrue(
-                    eventResponse.startDate().isEqual(updatedEvent.startDate())
-            );
-            assertTrue(
-                    eventResponse.endDate().isEqual(updatedEvent.endDate())
-            );
-            assertEquals(
-                    eventResponse.availableTickets(),
-                    updatedEvent.availableTickets()
-            );
+            EventResponse updatedEvent = eventQueryService.getEvent(eventResponse.id());
+            assertEquals(eventResponse.name(), updatedEvent.name());
+            assertEquals(eventResponse.price(), updatedEvent.price());
+            assertTrue(eventResponse.startDate().isEqual(updatedEvent.startDate()));
+            assertTrue(eventResponse.endDate().isEqual(updatedEvent.endDate()));
+            assertEquals(eventResponse.availableTickets(), updatedEvent.availableTickets());
             assertEquals(EventStatus.ACTIVE, updatedEvent.status());
         }
 

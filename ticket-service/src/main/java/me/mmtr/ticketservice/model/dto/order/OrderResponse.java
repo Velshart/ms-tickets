@@ -3,9 +3,11 @@ package me.mmtr.ticketservice.model.dto.order;
 import me.mmtr.ticketservice.model.Order;
 import me.mmtr.ticketservice.model.OrderStatus;
 import me.mmtr.ticketservice.model.dto.ticket.TicketResponse;
+import org.springframework.hateoas.server.core.Relation;
 
 import java.util.List;
 
+@Relation(collectionRelation = "orders", itemRelation = "order")
 public record OrderResponse(
         Long id,
         Long userId,

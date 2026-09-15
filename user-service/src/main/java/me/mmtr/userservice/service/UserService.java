@@ -1,6 +1,5 @@
 package me.mmtr.userservice.service;
 
-import jakarta.transaction.Transactional;
 import me.mmtr.userservice.model.Role;
 import me.mmtr.userservice.model.User;
 import me.mmtr.userservice.model.dto.messaging.UserDeletedEvent;
@@ -9,9 +8,10 @@ import me.mmtr.userservice.model.exception.InsufficientPrivilegesException;
 import me.mmtr.userservice.model.exception.UserNotFoundException;
 import me.mmtr.userservice.repository.UserRepository;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserService {
@@ -31,12 +31,9 @@ public class UserService {
         return UserResponse.fromUser(getUserById(id));
     }
 
-    public List<UserResponse> listUsers() {
-        return userRepository
-                .findAll()
-                .stream()
-                .map(UserResponse::fromUser)
-                .toList();
+    public Page<UserResponse> listUsers(Pageable pageable) {
+        return userRepository.findAll(pageable)
+                .map(UserResponse::fromUser);
     }
 
     @Transactional

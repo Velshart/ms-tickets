@@ -5,10 +5,10 @@ import me.mmtr.ticketservice.model.dto.event.EventResponse;
 import me.mmtr.ticketservice.model.exception.EventNotFoundException;
 import me.mmtr.ticketservice.model.exception.TicketsSoldOutException;
 import me.mmtr.ticketservice.repository.EventRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 public class EventQueryService {
@@ -26,11 +26,9 @@ public class EventQueryService {
         return EventResponse.from(event);
     }
 
-    public List<EventResponse> getAllEvents() {
-        return eventRepository.findAll()
-                .stream()
-                .map(EventResponse::from)
-                .toList();
+    public Page<EventResponse> getAllEvents(Pageable pageable) {
+        return eventRepository.findAll(pageable)
+                .map(EventResponse::from);
     }
 
     @Transactional(noRollbackFor = TicketsSoldOutException.class)

@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.filter.ForwardedHeaderFilter;
 
 @Configuration("ticketsApiSecurityConfiguration")
 @EnableWebSecurity
@@ -46,9 +47,18 @@ public class SecurityConfiguration {
                                         .sessionCreationPolicy(
                                                 SessionCreationPolicy.STATELESS))
                 .addFilterBefore(
+                        ticketServiceForwardedHeaderFilter(),
+                        UsernamePasswordAuthenticationFilter.class
+                )
+                .addFilterBefore(
                         authenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
                 );
         return http.build();
+    }
+
+    @Bean
+    public ForwardedHeaderFilter ticketServiceForwardedHeaderFilter() {
+        return new ForwardedHeaderFilter();
     }
 }
