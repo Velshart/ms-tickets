@@ -41,45 +41,44 @@ public class EventTicketReservationServiceConcurrencyTest
 
         int numberOfRequests = 20;
 
-        ExecutorService executor =
-                Executors.newFixedThreadPool(numberOfRequests);
+        try (ExecutorService executor =
+                     Executors.newFixedThreadPool(numberOfRequests)
+        ) {
+            CountDownLatch countDownLatch = new CountDownLatch(1);
 
-        CountDownLatch countDownLatch = new CountDownLatch(1);
+            List<Future<Long>> futures = new ArrayList<>();
 
-        List<Future<Long>> futures = new ArrayList<>();
+            for (int i = 0; i < numberOfRequests; i++) {
+                futures.add(executor.submit(() -> {
+                    countDownLatch.await();
 
-        for (int i = 0; i < numberOfRequests; i++) {
-            futures.add(executor.submit(() -> {
-                countDownLatch.await();
+                    return reservationService.reserveTickets(eventId, 1);
+                }));
+            }
 
-                return reservationService.reserveTickets(eventId, 1);
-            }));
+            countDownLatch.countDown();
+
+            int successfulReservations = 0;
+
+            for (Future<Long> future : futures) {
+                Long reserved = future.get();
+
+                assertEquals(1L, reserved);
+                successfulReservations++;
+            }
+
+            assertEquals(
+                    numberOfRequests,
+                    successfulReservations
+            );
+
+            Event result = eventRepository.findById(eventId)
+                    .orElseThrow();
+
+            assertEquals(
+                    80L,
+                    result.getAvailableTickets()
+            );
         }
-
-        countDownLatch.countDown();
-
-        int successfulReservations = 0;
-
-        for (Future<Long> future : futures) {
-            Long reserved = future.get();
-
-            assertEquals(1L, reserved);
-            successfulReservations++;
-        }
-
-        executor.shutdown();
-
-        assertEquals(
-                numberOfRequests,
-                successfulReservations
-        );
-
-        Event result = eventRepository.findById(eventId)
-                .orElseThrow();
-
-        assertEquals(
-                80L,
-                result.getAvailableTickets()
-        );
     }
 }
