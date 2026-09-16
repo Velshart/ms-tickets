@@ -45,6 +45,8 @@ public class OrderServiceTests {
     @Mock
     private EventQueryService eventQueryService;
     @Mock
+    private EventTicketReservationService eventTicketReservationService;
+    @Mock
     private OrderRepository orderRepository;
     @Mock
     private ApplicationEventPublisher publisher;
@@ -176,7 +178,7 @@ public class OrderServiceTests {
 
             orderService.deleteOrderAsUser(ORDER_ID, USER_ID);
 
-            verify(eventQueryService).returnTickets(activeEvent.getId(), 2);
+            verify(eventTicketReservationService).returnTickets(activeEvent.getId(), 2);
             verify(orderRepository).delete(order);
 
             ArgumentCaptor<OrderDeletedEvent> eventCaptor = ArgumentCaptor.forClass(OrderDeletedEvent.class);
@@ -198,7 +200,7 @@ public class OrderServiceTests {
 
             orderService.deleteOrderAsAdmin(ORDER_ID);
 
-            verify(eventQueryService).returnTickets(activeEvent.getId(), 1);
+            verify(eventTicketReservationService).returnTickets(activeEvent.getId(), 1);
             verify(orderRepository).delete(order);
 
             ArgumentCaptor<OrderDeletedEvent> eventCaptor = ArgumentCaptor.forClass(OrderDeletedEvent.class);

@@ -3,12 +3,10 @@ package me.mmtr.ticketservice.service;
 import me.mmtr.ticketservice.model.Event;
 import me.mmtr.ticketservice.model.dto.event.EventResponse;
 import me.mmtr.ticketservice.model.exception.EventNotFoundException;
-import me.mmtr.ticketservice.model.exception.TicketsSoldOutException;
 import me.mmtr.ticketservice.repository.EventRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class EventQueryService {
@@ -21,7 +19,7 @@ public class EventQueryService {
     }
 
     public EventResponse getEvent(Long id) {
-        Event event = getEventById(id);
+        Event event = getEventEntity(id);
 
         return EventResponse.from(event);
     }
@@ -31,29 +29,29 @@ public class EventQueryService {
                 .map(EventResponse::from);
     }
 
-    @Transactional(noRollbackFor = TicketsSoldOutException.class)
-    public long reserveTickets(Long eventId, long quantity) {
-        Event event = getEventById(eventId);
-
-        long reservedTickets = event.reserveTickets(quantity);
-        eventRepository.save(event);
-
-        return reservedTickets;
-    }
-
-    @Transactional
-    public void returnTickets(Long eventId, long quantity) {
-        Event event = getEventEntity(eventId);
-        event.returnTickets(quantity);
-
-        eventRepository.save(event);
-    }
+//    @Transactional(noRollbackFor = TicketsSoldOutException.class)
+//    public long reserveTickets(Long eventId, long quantity) {
+//        Event event = getEventEntity(eventId);
+//
+//        long reservedTickets = event.reserveTickets(quantity);
+//        eventRepository.save(event);
+//
+//        return reservedTickets;
+//    }
+//
+//    @Transactional
+//    public void returnTickets(Long eventId, long quantity) {
+//        Event event = getEventEntity(eventId);
+//        event.returnTickets(quantity);
+//
+//        eventRepository.save(event);
+//    }
 
     public Event getEventEntity(Long id) {
-        return getEventById(id);
+        return getEventEntityById(id);
     }
 
-    private Event getEventById(Long id) {
+    private Event getEventEntityById(Long id) {
         return eventRepository.findById(id)
                 .orElseThrow(() -> new EventNotFoundException(id));
     }

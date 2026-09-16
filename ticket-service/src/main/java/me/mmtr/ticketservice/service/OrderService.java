@@ -4,8 +4,6 @@ import jakarta.transaction.Transactional;
 import me.mmtr.ticketservice.model.Event;
 import me.mmtr.ticketservice.model.EventStatus;
 import me.mmtr.ticketservice.model.Order;
-import me.mmtr.ticketservice.model.Ticket;
-import me.mmtr.ticketservice.model.dto.messaging.OrderCreatedEvent;
 import me.mmtr.ticketservice.model.dto.messaging.OrderDeletedEvent;
 import me.mmtr.ticketservice.model.dto.messaging.OrderSubmittedEvent;
 import me.mmtr.ticketservice.model.dto.order.OrderResponse;
@@ -20,19 +18,21 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class OrderService {
+    private final EventTicketReservationService eventTicketReservationService;
     private final EventQueryService eventQueryService;
     private final OrderRepository orderRepository;
     private final ApplicationEventPublisher publisher;
 
     public OrderService(
+            EventTicketReservationService eventTicketReservationService,
             EventQueryService eventQueryService,
             OrderRepository orderRepository,
             ApplicationEventPublisher publisher
     ) {
+        this.eventTicketReservationService = eventTicketReservationService;
         this.eventQueryService = eventQueryService;
         this.orderRepository = orderRepository;
         this.publisher = publisher;
@@ -58,49 +58,6 @@ public class OrderService {
                 request.ticketQuantity()
         ));
         return OrderResponse.from(savedOrder);
-    }
-
-    @Transactional
-    public OrderResponse createOrder(
-            BuyTicketsRequest buyTicketRequest,
-            Long userId
-    ) {
-        Long eventId = buyTicketRequest.eventId();
-        long ticketsAmount = buyTicketRequest.ticketQuantity();
-
-        Event event = eventQueryService.getEventEntity(eventId);
-
-        if (event.getStatus() == EventStatus.ACTIVE) {
-            long reservedTicketsQuantity = eventQueryService
-                    .reserveTickets(eventId, ticketsAmount);
-
-            Order order;
-            Optional<Order> orderOptional =
-                    orderRepository.findByUserIdAndEventId(userId, eventId);
-
-            order = orderOptional.orElseGet(() -> new Order(
-                    userId,
-                    event
-            ));
-
-            for (int i = 0; i < reservedTicketsQuantity; i++) {
-                Ticket ticket = new Ticket(order);
-                order.addTicket(ticket);
-            }
-
-            Order savedOrder = orderRepository.save(order);
-            publisher.publishEvent(
-                    new OrderCreatedEvent(
-                            savedOrder.getId(),
-                            userId,
-                            order.getEvent().getName(),
-                            reservedTicketsQuantity
-                    )
-            );
-            return OrderResponse.from(savedOrder);
-        } else {
-            throw new TicketSalesClosedException(eventId);
-        }
     }
 
     public OrderResponse getOrder(Long orderId, Long userId) {
@@ -163,7 +120,7 @@ public class OrderService {
 
     private void deleteOrder(Order order) {
         if (!order.getTickets().isEmpty()) {
-            eventQueryService.returnTickets(
+            eventTicketReservationService.returnTickets(
                     order.getEvent().getId(),
                     order.getTickets().size()
             );

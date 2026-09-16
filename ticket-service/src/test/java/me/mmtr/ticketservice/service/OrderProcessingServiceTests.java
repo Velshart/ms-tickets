@@ -35,7 +35,7 @@ public class OrderProcessingServiceTests {
     @Mock
     private OrderRepository orderRepository;
     @Mock
-    private EventQueryService eventQueryService;
+    private EventTicketReservationService eventTicketReservationService;
     @Mock
     private ApplicationEventPublisher publisher;
     @InjectMocks
@@ -77,7 +77,7 @@ public class OrderProcessingServiceTests {
 
         verify(orderRepository, never()).save(any(Order.class));
         verify(publisher, never()).publishEvent(any(OrderCreatedEvent.class));
-        verify(eventQueryService, never()).reserveTickets(anyLong(), anyLong());
+        verify(eventTicketReservationService, never()).reserveTickets(anyLong(), anyLong());
     }
 
     @Test
@@ -94,7 +94,7 @@ public class OrderProcessingServiceTests {
 
         assertEquals(OrderStatus.PROCESSING_ERROR, order.getOrderStatus());
         verify(orderRepository).save(order);
-        verify(eventQueryService, never()).reserveTickets(anyLong(), anyLong());
+        verify(eventTicketReservationService, never()).reserveTickets(anyLong(), anyLong());
         verify(publisher, never()).publishEvent(any());
     }
 
@@ -106,14 +106,14 @@ public class OrderProcessingServiceTests {
         orderProcessingService.processOrder(orderRequestMessage);
 
         verify(orderRepository, never()).save(any(Order.class));
-        verify(eventQueryService, never()).reserveTickets(anyLong(), anyLong());
+        verify(eventTicketReservationService, never()).reserveTickets(anyLong(), anyLong());
         verify(publisher, never()).publishEvent(any());
     }
 
     @Test
     void shouldConfirmOrderAddTicketsAndPublishEventWhenTicketsReserved() {
         when(orderRepository.findById(ORDER_ID)).thenReturn(Optional.of(order));
-        when(eventQueryService.reserveTickets(EVENT_ID, TICKET_QUANTITY)).thenReturn(TICKET_QUANTITY);
+        when(eventTicketReservationService.reserveTickets(EVENT_ID, TICKET_QUANTITY)).thenReturn(TICKET_QUANTITY);
 
         orderProcessingService.processOrder(orderRequestMessage);
 
@@ -135,7 +135,7 @@ public class OrderProcessingServiceTests {
     @Test
     void shouldSetTicketsSoldOutStatusWhenTicketsSoldOutExceptionThrown() {
         when(orderRepository.findById(ORDER_ID)).thenReturn(Optional.of(order));
-        when(eventQueryService.reserveTickets(EVENT_ID, TICKET_QUANTITY))
+        when(eventTicketReservationService.reserveTickets(EVENT_ID, TICKET_QUANTITY))
                 .thenThrow(new TicketsSoldOutException(EVENT_ID));
 
         orderProcessingService.processOrder(orderRequestMessage);

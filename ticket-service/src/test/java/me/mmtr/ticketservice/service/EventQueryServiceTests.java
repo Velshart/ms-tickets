@@ -102,32 +102,32 @@ public class EventQueryServiceTests {
         }
     }
 
-    @Nested
-    class TicketReservationTests {
-        private static final long QUANTITY_TO_RESERVE = 5L;
-        private static final long QUANTITY_TO_RETURN = 3L;
-
-        @Test
-        void shouldReserveTicketsAndSaveEvent() {
-            when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(event));
-            when(eventRepository.save(event)).thenReturn(event);
-
-            long reserved = eventQueryService.reserveTickets(EVENT_ID, QUANTITY_TO_RESERVE);
-
-            assertEquals(QUANTITY_TO_RESERVE, reserved);
-            assertEquals(INITIAL_TICKETS - QUANTITY_TO_RESERVE, event.getAvailableTickets());
-            verify(eventRepository).save(event);
-        }
-
-        @Test
-        void shouldReturnTicketsAndSaveEvent() {
-            when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(event));
-            when(eventRepository.save(event)).thenReturn(event);
-
-            eventQueryService.returnTickets(EVENT_ID, QUANTITY_TO_RETURN);
-
-            assertEquals(INITIAL_TICKETS + QUANTITY_TO_RETURN, event.getAvailableTickets());
-            verify(eventRepository).save(event);
-        }
-    }
+//    @Nested
+//    class TicketReservationTests {
+//        private static final long QUANTITY_TO_RESERVE = 5L;
+//        private static final long QUANTITY_TO_RETURN = 3L;
+//
+//        @Test
+//        void shouldReserveTicketsAndSaveEvent() {
+//            when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(event));
+//            when(eventRepository.save(event)).thenReturn(event);
+//
+//            long reserved = eventQueryService.reserveTickets(EVENT_ID, QUANTITY_TO_RESERVE);
+//
+//            assertEquals(QUANTITY_TO_RESERVE, reserved);
+//            assertEquals(INITIAL_TICKETS - QUANTITY_TO_RESERVE, event.getAvailableTickets());
+//            verify(eventRepository).save(event);
+//        }
+//
+//        @Test
+//        void shouldReturnTicketsAndSaveEvent() {
+//            when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(event));
+//            when(eventRepository.save(event)).thenReturn(event);
+//
+//            eventQueryService.returnTickets(EVENT_ID, QUANTITY_TO_RETURN);
+//
+//            assertEquals(INITIAL_TICKETS + QUANTITY_TO_RETURN, event.getAvailableTickets());
+//            verify(eventRepository).save(event);
+//        }
+//    }
 }

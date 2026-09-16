@@ -14,17 +14,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class OrderProcessingService {
+    private final EventTicketReservationService eventTicketReservationService;
     private final OrderRepository orderRepository;
-    private final EventQueryService eventQueryService;
     private final ApplicationEventPublisher publisher;
 
     public OrderProcessingService(
+            EventTicketReservationService eventTicketReservationService,
             OrderRepository orderRepository,
-            EventQueryService eventQueryService,
             ApplicationEventPublisher publisher
     ) {
+        this.eventTicketReservationService = eventTicketReservationService;
         this.orderRepository = orderRepository;
-        this.eventQueryService = eventQueryService;
         this.publisher = publisher;
     }
 
@@ -44,7 +44,7 @@ public class OrderProcessingService {
         }
 
         try {
-            long reservedTicketsQuantity = eventQueryService
+            long reservedTicketsQuantity = eventTicketReservationService
                     .reserveTickets(message.eventId(), message.ticketQuantity());
 
             for (int i = 0; i < reservedTicketsQuantity; i++) {
