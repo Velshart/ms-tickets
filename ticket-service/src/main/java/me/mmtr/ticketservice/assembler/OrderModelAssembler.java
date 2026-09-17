@@ -22,8 +22,10 @@ public class OrderModelAssembler implements RepresentationModelAssembler<OrderRe
                 order,
                 linkTo(methodOn(OrderController.class).getOrderById(order.id(), null)).withSelfRel(),
                 linkTo(methodOn(OrderController.class).getAllOrdersForUser(Pageable.unpaged(), null, null)).withRel("user-orders"),
+                linkTo(methodOn(OrderController.class).getUserOrders(Pageable.unpaged(), order.userId(), null)).withRel("user-orders-admin"),
                 linkTo(methodOn(OrderController.class).getOrderStatus(order.id(), null)).withRel("status"),
-                linkTo(methodOn(OrderController.class).deleteOrderAsUser(order.id(), null)).withRel("cancel-user"),
+                linkTo(methodOn(OrderController.class).deleteOrderAsUser(order.id(), null)).withRel("user-cancel"),
+                linkTo(methodOn(OrderController.class).deleteOrderAsAdmin(order.id())).withRel("admin-cancel"),
                 linkTo(methodOn(EventController.class).getEventById(order.eventId())).withRel("event")
         );
     }
