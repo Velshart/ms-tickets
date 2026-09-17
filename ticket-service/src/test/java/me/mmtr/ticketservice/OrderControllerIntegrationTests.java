@@ -256,4 +256,46 @@ public class OrderControllerIntegrationTests extends TicketServiceModuleIntegrat
                     .andExpect(status().isNotFound());
         }
     }
+
+    @Nested
+    class GetUserOrdersTests {
+        private static final Long ADMIN_ID = 1L;
+        private static final Long USER_ID = 100L;
+
+        @Test
+        void shouldGetAllOrdersOfUserWithProvidedIdAndReturnOk() throws Exception {
+            EventResponse event = createEventAndOpenTicketSales("Event");
+            OrderResponse order = createOrder(event.id(), USER_ID);
+
+            mockMvc.perform(get("/api/orders/admin/{userId}", USER_ID)
+                    .param("page", "0")
+                    .param("size", "10")
+                    .with(withUser(ADMIN_ID, "ROLE_ADMIN")))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$._embedded.orders").isArray())
+                    .andExpect(jsonPath("$._embedded.orders.length()").value(1))
+                    .andExpect(jsonPath("$._embedded.orders[0].id").value(order.id()))
+                    .andExpect(jsonPath("$._links.self.href").exists())
+                    .andExpect(jsonPath("$.page.totalElements").value(1));
+        }
+
+        @Test
+        void shouldReturnForbiddenWhenRegularUserTriesToCheckOtherUsersOrdersOfUser() throws Exception {
+            mockMvc.perform(get("/api/orders/admin/{userId}", ADMIN_ID)
+                            .param("page", "0")
+                            .param("size", "10")
+                            .with(withUser(USER_ID, "ROLE_USER")))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        void shouldReturnEmptyListWhenUserHasNoOrders() throws Exception {
+            mockMvc.perform(get("/api/orders/admin/{userId}", USER_ID)
+                            .with(withUser(ADMIN_ID, "ROLE_ADMIN")))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$._embedded").doesNotExist())
+                    .andExpect(jsonPath("$._links.self.href").exists())
+                    .andExpect(jsonPath("$.page.totalElements").value(0));
+        }
+    }
 }

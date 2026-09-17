@@ -98,4 +98,17 @@ public class OrderController {
         orderService.deleteOrderAsAdmin(orderId);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/admin/{userId}")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<CollectionModel<EntityModel<OrderResponse>>> getUserOrders(
+            Pageable pageable,
+            @PathVariable Long userId,
+            PagedResourcesAssembler<OrderResponse> pagedResourcesAssembler
+    ) {
+        Page<OrderResponse> orderPage = orderService.getAllOrdersByUserId(userId, pageable);
+        PagedModel<EntityModel<OrderResponse>> pagedModel =
+                pagedResourcesAssembler.toModel(orderPage, orderModelAssembler);
+        return ResponseEntity.ok(pagedModel);
+    }
 }

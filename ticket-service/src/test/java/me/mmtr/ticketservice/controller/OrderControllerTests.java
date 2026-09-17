@@ -217,6 +217,31 @@ public class OrderControllerTests {
     }
 
     @Nested
+    class GetUserOrdersTests {
+        @Test
+        void shouldReturnPagedOrdersForSpecificUserWhenAdmin() throws Exception {
+            Long targetUserId = 200L;
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<OrderResponse> page = new PageImpl<>(List.of(orderResponse), pageable, 1);
+
+            when(orderService.getAllOrdersByUserId(eq(targetUserId), any(Pageable.class)))
+                    .thenReturn(page);
+
+            mockMvc.perform(get("/api/orders/admin/{userId}", targetUserId)
+                            .param("page", "0")
+                            .param("size", "10")
+                            .with(user(user)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$._embedded.orders[0].id").value(ORDER_ID))
+                    .andExpect(jsonPath("$._embedded.orders[0]._links.self.href").exists())
+                    .andExpect(jsonPath("$._links.self.href").exists())
+                    .andExpect(jsonPath("$.page.totalElements").value(1));
+
+            verify(orderService).getAllOrdersByUserId(eq(targetUserId), any(Pageable.class));
+        }
+    }
+
+    @Nested
     class GetOrderByIdTests {
 
         @Test
