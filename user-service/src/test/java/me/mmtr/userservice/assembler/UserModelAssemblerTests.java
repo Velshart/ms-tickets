@@ -2,31 +2,16 @@ package me.mmtr.userservice.assembler;
 
 
 import me.mmtr.userservice.model.dto.response.UserResponse;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class UserModelAssemblerTests {
-    private UserModelAssembler userModelAssembler;
-
-    @BeforeEach
-    public void setUp() {
-        userModelAssembler = new UserModelAssembler();
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setServerName("localhost");
-        request.setServerPort(8080);
-        RequestContextHolder.setRequestAttributes(
-                new ServletRequestAttributes(request)
-        );
-    }
+    private final UserModelAssembler userModelAssembler = new UserModelAssembler();
 
     @Test
     void shouldCreateEntityModelWithCorrectLinks() {
