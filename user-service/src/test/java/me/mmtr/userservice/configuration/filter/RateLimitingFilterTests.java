@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
 public class RateLimitingFilterTests {
 
     private static final String CLIENT_IP = "192.168.1.1";
-    private static final int BUCKET_CAPACITY = 10;
+    private static final int BUCKET_CAPACITY = 5;
 
     @Mock
     private HttpServletRequest request;
