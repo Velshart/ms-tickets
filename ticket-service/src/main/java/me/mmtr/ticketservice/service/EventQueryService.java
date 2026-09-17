@@ -29,24 +29,6 @@ public class EventQueryService {
                 .map(EventResponse::from);
     }
 
-//    @Transactional(noRollbackFor = TicketsSoldOutException.class)
-//    public long reserveTickets(Long eventId, long quantity) {
-//        Event event = getEventEntity(eventId);
-//
-//        long reservedTickets = event.reserveTickets(quantity);
-//        eventRepository.save(event);
-//
-//        return reservedTickets;
-//    }
-//
-//    @Transactional
-//    public void returnTickets(Long eventId, long quantity) {
-//        Event event = getEventEntity(eventId);
-//        event.returnTickets(quantity);
-//
-//        eventRepository.save(event);
-//    }
-
     public Event getEventEntity(Long id) {
         return getEventEntityById(id);
     }

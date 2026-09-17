@@ -9,6 +9,7 @@ import me.mmtr.ticketservice.model.exception.OrderNotFoundException;
 import me.mmtr.ticketservice.model.exception.TicketsSoldOutException;
 import me.mmtr.ticketservice.repository.OrderRepository;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,6 +65,9 @@ public class OrderProcessingService {
             );
         } catch (TicketsSoldOutException e) {
             order.setOrderStatus(OrderStatus.TICKETS_SOLD_OUT);
+            orderRepository.save(order);
+        } catch (ConcurrencyFailureException e) {
+            order.setOrderStatus(OrderStatus.PROCESSING_ERROR);
             orderRepository.save(order);
         }
     }

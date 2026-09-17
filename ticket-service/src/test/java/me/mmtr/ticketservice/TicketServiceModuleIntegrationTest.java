@@ -1,6 +1,5 @@
 package me.mmtr.ticketservice;
 
-import jakarta.transaction.Transactional;
 import me.mmtr.ticketservice.configuration.filter.RateLimitingFilter;
 import me.mmtr.ticketservice.model.authentication.AuthenticatedUser;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +19,7 @@ import java.util.List;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.securityContext;
 
-@Transactional
+//@Transactional
 @SpringBootTest
 @AutoConfigureMockMvc
 public abstract class TicketServiceModuleIntegrationTest {

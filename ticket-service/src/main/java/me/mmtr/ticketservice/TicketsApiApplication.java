@@ -5,8 +5,10 @@ import me.mmtr.common.web.SystemExceptionHandler;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
+import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+@EnableRetry
 @EnableScheduling
 @SpringBootApplication
 @Import({CommonRabbitMQConfiguration.class, SystemExceptionHandler.class})
