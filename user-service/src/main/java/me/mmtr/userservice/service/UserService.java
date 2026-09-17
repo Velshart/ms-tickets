@@ -31,6 +31,10 @@ public class UserService {
         return UserResponse.fromUser(getUserById(id));
     }
 
+    public UserResponse getByUsername(String username) {
+        return UserResponse.fromUser(getUserByUsername(username));
+    }
+
     public Page<UserResponse> listUsers(Pageable pageable) {
         return userRepository.findAll(pageable)
                 .map(UserResponse::fromUser);
@@ -48,6 +52,12 @@ public class UserService {
                 target.getId(),
                 target.getEmail()
         ));
+    }
+
+    private User getUserByUsername(String username) {
+        return userRepository
+                .findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException(username));
     }
 
     private User getUserById(Long id) {

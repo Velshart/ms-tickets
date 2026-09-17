@@ -144,6 +144,35 @@ public class UserControllerTests {
     }
 
     @Nested
+    class GetUserByUsernameTests {
+
+        @Test
+        @WithMockUser
+        void shouldReturnOkWithUserDataAndHateoasLinks() throws Exception {
+            when(userService.getByUsername(USERNAME)).thenReturn(userResponse);
+
+            mockMvc.perform(get("/api/users/username/" + USERNAME))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(user.getId()))
+                    .andExpect(jsonPath("$.username").value(user.getUsername()))
+                    .andExpect(jsonPath("$.role").value(user.getRole().toString()))
+                    .andExpect(jsonPath("$._links.self.href").value("http://localhost/api/users/" + ID))
+                    .andExpect(jsonPath("$._links.users.href").value("http://localhost/api/users"))
+                    .andExpect(jsonPath("$._links.delete.href").value("http://localhost/api/users/" + ID));
+        }
+
+        @Test
+        @WithMockUser
+        void shouldReturnNotFoundWhenUserDoesNotExist() throws Exception {
+            when(userService.getByUsername(USERNAME))
+                    .thenThrow(UserNotFoundException.class);
+
+            mockMvc.perform(get("/api/users/username/" + USERNAME))
+                    .andExpect(status().isNotFound());
+        }
+    }
+
+    @Nested
     class RegisterAdminTests {
 
         @Test

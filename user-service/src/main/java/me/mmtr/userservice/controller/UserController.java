@@ -54,6 +54,11 @@ public class UserController {
         return ResponseEntity.ok(modelAssembler.toModel(userService.getById(id)));
     }
 
+    @GetMapping("/username/{username}")
+    public ResponseEntity<EntityModel<UserResponse>> getUserByUsername(@PathVariable String username) {
+        return ResponseEntity.ok(modelAssembler.toModel(userService.getByUsername(username)));
+    }
+
     @PostMapping("/register-admin")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<EntityModel<UserResponse>> registerAdmin(
@@ -68,7 +73,6 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<Void> deleteUser(
             @PathVariable Long id,
             @AuthenticationPrincipal User currentUser

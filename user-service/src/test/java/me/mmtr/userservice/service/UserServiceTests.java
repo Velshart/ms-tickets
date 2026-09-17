@@ -80,6 +80,32 @@ public class UserServiceTests {
     }
 
     @Nested
+    class GetByUsernameTests {
+        @Test
+        void shouldReturnUserByUsername() {
+            when(userRepository.findByUsername(TEST_USER_NAME))
+                    .thenReturn(Optional.of(testUser));
+
+            UserResponse userResponse = userService.getByUsername(TEST_USER_NAME);
+
+            assertEquals(TEST_USER_ID, userResponse.id());
+            assertEquals(TEST_USER_NAME, userResponse.username());
+            assertEquals(Role.SUPER_ADMIN.toString(), userResponse.role());
+        }
+
+        @Test
+        void shouldThrowExceptionWhenUserNotFound() {
+            when(userRepository.findByUsername(TEST_USER_NAME))
+                    .thenReturn(Optional.empty());
+
+            assertThrows(
+                    UserNotFoundException.class,
+                    () -> userService.getByUsername(TEST_USER_NAME)
+            );
+        }
+    }
+
+    @Nested
     class ListUsersTests {
         @Test
         void shouldListExistingUser() {
