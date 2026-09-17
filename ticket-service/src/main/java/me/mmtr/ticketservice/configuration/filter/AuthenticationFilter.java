@@ -1,26 +1,21 @@
-package me.mmtr.userservice.configuration.filter;
+package me.mmtr.ticketservice.configuration.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import me.mmtr.ticketservice.model.authentication.AuthenticatedUser;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
-@Component("usersServiceJwtAuthenticationFilter")
-public class JwtAuthenticationFilter extends OncePerRequestFilter {
-
-    private final UserDetailsService userDetailsService;
-
-    public JwtAuthenticationFilter(UserDetailsService userDetailsService) {
-        this.userDetailsService = userDetailsService;
-    }
+@Component("ticketsApiAuthenticationFilter")
+public class AuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     public void doFilterInternal(
@@ -29,24 +24,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        String userId = request.getHeader("X-User-Id");
+        String userIdHeader = request.getHeader("X-User-Id");
         String username = request.getHeader("X-User-Name");
         String email = request.getHeader("X-User-Email");
         String userRole = request.getHeader("X-User-Role");
 
-        if (areHeadersValid(userId, username, email, userRole) &&
+        if (areHeadersValid(userIdHeader, username, email, userRole) &&
                 SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            Long userId = Long.valueOf(userIdHeader);
 
-            UsernamePasswordAuthenticationToken authenticationToken =
-                    new UsernamePasswordAuthenticationToken(
-                            userDetails,
-                            null,
-                            userDetails.getAuthorities()
-                    );
+            var authenticatedUser = new AuthenticatedUser(
+                    userId,
+                    username,
+                    email,
+                    List.of(new SimpleGrantedAuthority(userRole))
+            );
 
-            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            var authentication = new UsernamePasswordAuthenticationToken(
+                    authenticatedUser,
+                    null,
+                    authenticatedUser.getAuthorities()
+            );
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
         filterChain.doFilter(request, response);

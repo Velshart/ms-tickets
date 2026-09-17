@@ -1,7 +1,7 @@
 package me.mmtr.userservice.configuration;
 
 import jakarta.servlet.http.HttpServletResponse;
-import me.mmtr.userservice.configuration.filter.JwtAuthenticationFilter;
+import me.mmtr.userservice.configuration.filter.AuthenticationFilter;
 import me.mmtr.userservice.configuration.filter.RateLimitingFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,12 +26,12 @@ import org.springframework.web.filter.ForwardedHeaderFilter;
 @EnableMethodSecurity
 public class SecurityConfiguration {
     private final UserDetailsService userDetailsService;
-    private final JwtAuthenticationFilter authenticationFilter;
+    private final AuthenticationFilter authenticationFilter;
     private final RateLimitingFilter rateLimitingFilter;
 
     public SecurityConfiguration(
             UserDetailsService userDetailsService,
-            JwtAuthenticationFilter authenticationFilter,
+            AuthenticationFilter authenticationFilter,
             RateLimitingFilter rateLimitingFilter
     ) {
         this.userDetailsService = userDetailsService;
@@ -46,7 +46,7 @@ public class SecurityConfiguration {
                 .securityMatcher("/api/auth/**", "/api/users/**")
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/user/**")
+                        .requestMatchers("/api/users/**")
                         .hasAnyRole("ADMIN", "SUPER_ADMIN")
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions

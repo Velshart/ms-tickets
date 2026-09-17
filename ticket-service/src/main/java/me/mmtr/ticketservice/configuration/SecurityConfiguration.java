@@ -1,7 +1,7 @@
 package me.mmtr.ticketservice.configuration;
 
 import jakarta.servlet.http.HttpServletResponse;
-import me.mmtr.ticketservice.configuration.filter.JwtAuthenticationFilter;
+import me.mmtr.ticketservice.configuration.filter.AuthenticationFilter;
 import me.mmtr.ticketservice.configuration.filter.RateLimitingFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,11 +19,11 @@ import org.springframework.web.filter.ForwardedHeaderFilter;
 @EnableMethodSecurity
 public class SecurityConfiguration {
     private final RateLimitingFilter rateLimitingFilter;
-    private final JwtAuthenticationFilter authenticationFilter;
+    private final AuthenticationFilter authenticationFilter;
 
     public SecurityConfiguration(
             RateLimitingFilter rateLimitingFilter,
-            JwtAuthenticationFilter authenticationFilter
+            AuthenticationFilter authenticationFilter
     ) {
         this.rateLimitingFilter = rateLimitingFilter;
         this.authenticationFilter = authenticationFilter;
