@@ -8,6 +8,8 @@ services:
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
     ports:
       - "5432:5432"
+    volumes:
+      - user-service-db-data:/var/lib/postgresql/data
 
   ticket-service-db:
     image: postgres:16-alpine
@@ -18,6 +20,8 @@ services:
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
     ports:
       - "5433:5432"
+    volumes:
+      - ticket-service-db-data:/var/lib/postgresql/data
 
   notification-service-db:
     image: postgres:16-alpine
@@ -28,6 +32,8 @@ services:
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
     ports:
       - "5434:5432"
+    volumes:
+      - notification-service-db-data:/var/lib/postgresql/data
 
   rabbitmq:
     image: rabbitmq:3.12-management-alpine
@@ -38,12 +44,16 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
 
   redis:
     image: redis:7-alpine
     container_name: redis
     ports:
       - "${REDIS_PORT}:6379"
+    volumes:
+      - redis-data:/data
 
   mailpit:
     image: axllent/mailpit:latest
@@ -51,3 +61,10 @@ services:
     ports:
       - "1025:1025"
       - "8025:8025"
+
+volumes:
+  user-service-db-data:
+  ticket-service-db-data:
+  notification-service-db-data:
+  rabbitmq-data:
+  redis-data:
