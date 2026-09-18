@@ -48,9 +48,9 @@ Registers a new standard user (`ROLE_USER`).
 
 * **Request:**
 ```http
-  POST /api/auth/register HTTP/1.1
-  Host: localhost:8080
-  Content-Type: application/json
+POST /api/auth/register HTTP/1.1
+Host: localhost:8080
+Content-Type: application/json
 
   {
     "username": "user",
@@ -60,7 +60,7 @@ Registers a new standard user (`ROLE_USER`).
  ```
 
 * **Response (`201 Created`)**
-```http
+```json
 {
   "id": 1,
   "username": "user",
@@ -521,9 +521,9 @@ Retrieves a paginated list of all events with HATEOAS hypermedia links.
 
 * **Request:**
 ```http
-  GET /api/events HTTP/1.1
-  Host: localhost:8080
-  Authorization: Bearer <JWT_TOKEN>
+GET /api/events HTTP/1.1
+Host: localhost:8080
+Authorization: Bearer <JWT_TOKEN>
 ```
 * **Response (200 `Ok`)**
 ```json
@@ -752,3 +752,58 @@ Authorization: Bearer <JWT_TOKEN>
 ```
 * **Response (204 `No Content`)**
 ---
+### Getting Started & Running the Project
+#### Prerequisites
+
+Ensure you have the following installed on your machine:
+
+* **Java 25**
+* **Gradle 9.x** (or use the provided `./gradlew` wrapper)
+* **Docker** & **Docker Compose**
+---
+#### 1. Environment Variables Setup
+
+Basing on the provided `env.example` file, create an `.env` file or export the required environment variables locally before launching the applications.
+
+#### 2. Running Supporting Infrastructure (Docker)
+Start the required databases (PostgreSQL) and message broker (RabbitMQ / Redis) using Docker Compose:
+```bash
+docker-compose up -d
+```
+
+#### 3. Building and Running Services
+You can run the microservices locally using Gradle wrapper or directly from your IDE:
+
+##### Step 1: Start API Gateway
+```bash
+cd api-gateway
+./gradlew bootRun
+```
+
+##### Step 2: Start Notification Service
+```bash
+cd notification-service
+./gradlew bootRun
+```
+
+##### Step 3: Start User Service
+```bash
+cd user-service
+./gradlew bootRun
+```
+
+##### Step 4: Start Ticket Service
+```bash
+cd ticket-service
+./gradlew bootRun
+```
+
+#### 4. Accessing the System
+All API requests should be routed through the API Gateway on port 8080.
+
+### Running Tests
+```bash
+# Run tests inside a specific module
+cd <module_name>
+./gradlew test
+```
